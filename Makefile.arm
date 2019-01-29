@@ -1,0 +1,112 @@
+CPU=cortex-m3
+
+LOCALBASE = /usr/local
+
+# toolchain
+CC = $(LOCALBASE)/bin/arm-none-eabi-gcc
+AS = $(LOCALBASE)/bin/arm-none-eabi-as
+LD = $(LOCALBASE)/bin/arm-none-eabi-ld
+OBJCOPY = $(LOCALBASE)/bin/arm-none-eabi-objcopy
+OPENOCD = $(LOCALBASE)/bin/openocd
+OPENOCD_SCRIPTS = $(LOCALBASE)/share/openocd/scripts
+CTAGS = $(LOCALBASE)/bin/uctags
+
+# CMSIS
+STM32_CMSIS_INC = -I./stm32cubef1/cmsis/include/stm32
+STM32_CMSIS_INC += -I./stm32cubef1/cmsis/include/cm3
+
+# HAL
+STM32_HAL_INC = -I./stm32cubef1/hal/include
+STM32_HAL_SRC_DIR = ./stm32cubef1/hal/src
+
+# libopencm3
+STM32_LIBOPENCM3_INC = -I./lib/libopencm3/include
+STM32_LIBOPENCM3_LIB = -L./lib/libopencm3/lib
+
+.if $(LIB) == cmsis
+DEPS = startup-stm32f1.o system-stm32f1.o
+HAL_DEPS = $(STM32_HAL_SRC_DIR)/stm32f1xx_hal.o
+HAL_DEPS += $(STM32_HAL_SRC_DIR)/stm32f1xx_hal_gpio.o
+.elif $(LIB) == opencm3
+DEPS = 
+.else
+@echo "no LIB specified"
+.endif
+
+all: build
+
+build: obj elf
+
+obj: $(PROG).o $(DEPS) $(HAL_DEPS)
+elf: $(PROG).elf
+
+.SUFFIXES: .s .S .c .o .elf .map
+.c.o:
+.if $(LIB) == cmsis
+	$(CC) -mcpu=$(CPU) -g -Os -c\
+		$(STM32_CMSIS_INC)\
+		$(STM32_HAL_INC)\
+		-DSTM32F103xB -o $(@:T) $<
+.elif $(LIB) == opencm3
+	$(CC) -mcpu=$(CPU) -g -Os -c\
+		$(STM32_LIBOPENCM3_INC)\
+		$(STM32_CMSIS_INC)\
+		-DSTM32F1 -o $@ $<
+.else
+	@echo "no LIB specified"
+.endif
+
+.o.elf:
+.if $(LIB) == cmsis
+	$(CC) $< $(DEPS) $(HAL_DEPS:T)\
+		-g -static -nostartfiles\
+		-Wl,-Map,$(<:R).map,--gc-sections,--cref\
+		-Wl,--start-group -lc -lgcc -lnosys -Wl,--end-group\
+		-T ./ld/stm32f1.ld\
+		-o $@
+.elif $(LIB) == opencm3
+	$(CC) $< $(STM32_LIBOPENCM3_LIB) -lopencm3_stm32f1\
+		-static -nostartfiles\
+		-Wl,-Map,$(<:R).map,--gc-sections,--cref\
+		-Wl,--start-group -lc -lgcc -lnosys -Wl,--end-group\
+		-T ./ld/stm32f103xb.ld\
+		-o $@
+.else
+	@echo "no LIB specified"
+.endif
+
+startup-stm32f1.o:
+	$(AS) -mcpu=$(CPU) -g -o $@ $<
+
+
+.PHONY: upload openocd disasm cmsistags opencm3tags 
+openocd:
+	$(OPENOCD) -f $(OPENOCD_SCRIPTS)/interface/$(OPENOCD_INTERFACE)\
+		-f $(OPENOCD_SCRIPTS)/target/$(OPENOCD_TARGET)
+
+debug:
+	$(OPENOCD) -f $(OPENOCD_SCRIPTS)/interface/$(OPENOCD_INTERFACE)\
+		-f $(OPENOCD_SCRIPTS)/target/$(OPENOCD_TARGET)
+	@echo "open another terminal and enter the command: telnet localhost 4444"
+
+upload:
+	$(OPENOCD) -f $(OPENOCD_SCRIPTS)/interface/$(OPENOCD_INTERFACE)\
+		-f $(OPENOCD_SCRIPTS)/target/$(OPENOCD_TARGET)\
+		-c "init" -c "reset init"\
+		-c "flash write_image erase skel.elf"\
+		-c "reset"\
+		-c "shutdown"
+
+disasm: $(PROG).elf
+	$(OBJDUMP) -h -S -t $(PROG).elf
+
+cmsistags:
+	$(CTAGS) -f cmsistags -R --format=1 --languages=C,C++ \
+		./lib/libopencmsis/include
+
+opencm3tags:
+	$(CTAGS) -f opencm3tags -R --format=1 --languages=C,C++ \
+		./lib/libopencm3/lib ./lib/libopencm3/include
+
+clean:
+	rm -rf *.o *.elf *.map tags
