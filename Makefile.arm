@@ -28,6 +28,7 @@ STM32_LIBOPENCM3_LIB = -L./lib/libopencm3/lib
 DEPS = startup-stm32f1.o system-stm32f1.o
 HAL_DEPS = $(STM32_HAL_SRC_DIR)/stm32f1xx_hal.o
 HAL_DEPS += $(STM32_HAL_SRC_DIR)/stm32f1xx_hal_gpio.o
+HAL_DEPS += $(STM32_HAL_SRC_DIR)/stm32f1xx_hal_cortex.o
 .elif $(LIB) == opencm3
 DEPS = 
 .else
