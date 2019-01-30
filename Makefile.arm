@@ -6,6 +6,7 @@ LOCALBASE = /usr/local
 CC = $(LOCALBASE)/bin/arm-none-eabi-gcc
 AS = $(LOCALBASE)/bin/arm-none-eabi-as
 LD = $(LOCALBASE)/bin/arm-none-eabi-ld
+OBJDUMP = $(LOCALBASE)/bin/arm-none-eabi-objdump
 OBJCOPY = $(LOCALBASE)/bin/arm-none-eabi-objcopy
 OPENOCD = $(LOCALBASE)/bin/openocd
 OPENOCD_SCRIPTS = $(LOCALBASE)/share/openocd/scripts
