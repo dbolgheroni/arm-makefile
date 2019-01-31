@@ -117,7 +117,7 @@ void SystemInit (void)
 
   /* Reset SW, HPRE, PPRE1, PPRE2, ADCPRE and MCO bits */
   RCC->CFGR &= 0xF8FF0000U;
-  
+
   /* Reset HSEON, CSSON and PLLON bits */
   RCC->CR &= 0xFEF6FFFFU;
 
@@ -129,7 +129,30 @@ void SystemInit (void)
 
   /* Disable all interrupts and clear pending bits  */
   RCC->CIR = 0x009F0000U;
-    
+
+  /* pll x9 = 72 MHz */
+  RCC->CFGR |= RCC_CFGR_PLLMULL9; /* can only be written when PLL is disabled */
+
+  /* APB1 /2 = 36 MHz (max) */
+  RCC->CFGR |= RCC_CFGR_PPRE1_2; /* can only be written when PLL is disabled */
+
+  /* pll enable */
+  RCC->CR |= RCC_CR_PLLON;
+
+  /* hse osc as pll clk input */
+  RCC->CFGR |= RCC_CFGR_PLLSRC; /* datasheet says this can only be written when
+                                   PLL is disabled, but writing before PLL is
+                                   enabled doesn't seem to work */
+
+  /* hse on */
+  RCC->CR |= RCC_CR_HSEON;
+
+  /* wait for hse to be ready */
+  while (!(RCC->CR & RCC_CR_HSERDY));
+
+  /* pll as sys clk */
+  RCC->CFGR |= RCC_CFGR_SW_1;
+
   /* Vector Table Relocation in Internal FLASH. */
   SCB->VTOR = FLASH_BASE | VECT_TAB_OFFSET;
 }
