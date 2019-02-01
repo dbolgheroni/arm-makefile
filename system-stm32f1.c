@@ -139,7 +139,7 @@ void SystemInit (void)
   /* pll enable */
   RCC->CR |= RCC_CR_PLLON;
 
-  /* hse osc as pll clk input */
+  /* hse osc as pllclk input */
   RCC->CFGR |= RCC_CFGR_PLLSRC; /* datasheet says this can only be written when
                                    PLL is disabled, but writing before PLL is
                                    enabled doesn't seem to work */
@@ -150,8 +150,11 @@ void SystemInit (void)
   /* wait for hse to be ready */
   while (!(RCC->CR & RCC_CR_HSERDY));
 
-  /* pll as sys clk */
+  /* pll as sysclk */
   RCC->CFGR |= RCC_CFGR_SW_1;
+
+  /* set 2 wait states for 24 MHz < sysclk <= 72 MHz */
+  FLASH->ACR |= FLASH_ACR_LATENCY_1;
 
   /* Vector Table Relocation in Internal FLASH. */
   SCB->VTOR = FLASH_BASE | VECT_TAB_OFFSET;
