@@ -130,25 +130,22 @@ void SystemInit (void)
   /* Disable all interrupts and clear pending bits  */
   RCC->CIR = 0x009F0000U;
 
+  /* enable hse and wait for it to be ready */
+  RCC->CR |= RCC_CR_HSEON;
+  while (!(RCC->CR & RCC_CR_HSERDY));
+
   /* pll x9 = 72 MHz */
-  RCC->CFGR |= RCC_CFGR_PLLMULL9; /* can only be written when PLL is disabled */
+  RCC->CFGR |= RCC_CFGR_PLLMULL9;
 
   /* APB1 /2 = 36 MHz (max) */
-  RCC->CFGR |= RCC_CFGR_PPRE1_2; /* can only be written when PLL is disabled */
-
-  /* pll enable */
-  RCC->CR |= RCC_CR_PLLON;
+  RCC->CFGR |= RCC_CFGR_PPRE1_2;
 
   /* hse osc as pllclk input */
-  RCC->CFGR |= RCC_CFGR_PLLSRC; /* datasheet says this can only be written when
-                                   PLL is disabled, but writing before PLL is
-                                   enabled doesn't seem to work */
+  RCC->CFGR |= RCC_CFGR_PLLSRC;
 
-  /* hse on */
-  RCC->CR |= RCC_CR_HSEON;
-
-  /* wait for hse to be ready */
-  while (!(RCC->CR & RCC_CR_HSERDY));
+  /* enable pll and wait for it to be ready */
+  RCC->CR |= RCC_CR_PLLON;
+  while (!(RCC->CR & RCC_CR_PLLRDY));
 
   /* pll as sysclk */
   RCC->CFGR |= RCC_CFGR_SW_1;
