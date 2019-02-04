@@ -8,6 +8,7 @@ AS = $(LOCALBASE)/bin/arm-none-eabi-as
 LD = $(LOCALBASE)/bin/arm-none-eabi-ld
 OBJDUMP = $(LOCALBASE)/bin/arm-none-eabi-objdump
 OBJCOPY = $(LOCALBASE)/bin/arm-none-eabi-objcopy
+SIZE = $(LOCALBASE)/bin/arm-none-eabi-size
 OPENOCD = $(LOCALBASE)/bin/openocd
 OPENOCD_SCRIPTS = $(LOCALBASE)/share/openocd/scripts
 CTAGS = $(LOCALBASE)/bin/uctags
@@ -35,7 +36,7 @@ DEPS =
 @echo "no LIB specified"
 .endif
 
-all: build
+all: build size
 
 build: obj elf
 
@@ -81,7 +82,7 @@ startup-stm32f1.o:
 	$(AS) -mcpu=$(CPU) -g -o $@ $<
 
 
-.PHONY: upload openocd disasm cmsistags opencm3tags 
+.PHONY: upload size disasm cmsistags opencm3tags
 openocd:
 	$(OPENOCD) -f $(OPENOCD_SCRIPTS)/interface/$(OPENOCD_INTERFACE)\
 		-f $(OPENOCD_SCRIPTS)/target/$(OPENOCD_TARGET)
@@ -97,6 +98,9 @@ upload:
 		-c "flash write_image erase skel.elf"\
 		-c "reset"\
 		-c "shutdown"
+
+size:
+	$(SIZE) $(PROG).elf
 
 disasm: $(PROG).elf
 	$(OBJDUMP) -h -S -t $(PROG).elf
