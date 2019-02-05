@@ -62,13 +62,14 @@ elf: $(PROG).elf
 .o.elf:
 .if $(LIB) == cmsis
 	$(CC) $< $(DEPS) $(HAL_DEPS:T)\
-		-g -static -nostartfiles\
+		-g -static -mcpu=$(CPU)\
 		-Wl,-Map,$(<:R).map,--gc-sections,--cref\
 		-Wl,--start-group -lc -lgcc -lnosys -Wl,--end-group\
 		-T ./ld/stm32f1.ld\
 		-o $@
 .elif $(LIB) == opencm3
 	$(CC) $< $(STM32_LIBOPENCM3_LIB) -lopencm3_stm32f1\
+		-mcpu=$(CPU)\
 		-static -nostartfiles\
 		-Wl,-Map,$(<:R).map,--gc-sections,--cref\
 		-Wl,--start-group -lc -lgcc -lnosys -Wl,--end-group\
