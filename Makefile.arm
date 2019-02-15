@@ -6,6 +6,7 @@ LOCALBASE = /usr/local
 CC = $(LOCALBASE)/bin/arm-none-eabi-gcc
 AS = $(LOCALBASE)/bin/arm-none-eabi-as
 LD = $(LOCALBASE)/bin/arm-none-eabi-ld
+DB = $(LOCALBASE)/bin/arm-none-eabi-gdb
 OBJDUMP = $(LOCALBASE)/bin/arm-none-eabi-objdump
 OBJCOPY = $(LOCALBASE)/bin/arm-none-eabi-objcopy
 SIZE = $(LOCALBASE)/bin/arm-none-eabi-size
@@ -83,14 +84,13 @@ startup-stm32f1.o:
 	$(AS) -mcpu=$(CPU) -g -o $@ $<
 
 
-.PHONY: upload size disasm cmsistags opencm3tags
-openocd:
+.PHONY: upload size disasm cmsistags opencm3tags debugd debug
+debugd:
 	$(OPENOCD) -f $(OPENOCD_SCRIPTS)/interface/$(OPENOCD_INTERFACE)\
 		-f $(OPENOCD_SCRIPTS)/target/$(OPENOCD_TARGET)
 
 debug:
-	$(OPENOCD) -f $(OPENOCD_SCRIPTS)/interface/$(OPENOCD_INTERFACE)\
-		-f $(OPENOCD_SCRIPTS)/target/$(OPENOCD_TARGET)
+	$(DB) -x arm-debug.gdb skel.elf
 
 upload:
 	$(OPENOCD) -f $(OPENOCD_SCRIPTS)/interface/$(OPENOCD_INTERFACE)\
