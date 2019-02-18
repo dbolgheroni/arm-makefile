@@ -25,7 +25,6 @@
 #include <stm32f103xb.h>
 #include "gpio.h"
 
-/* parameters: port */
 void gpio_init(GPIO_TypeDef *gpio) {
     if (gpio == GPIOA) {
         RCC->APB2ENR |= RCC_APB2ENR_IOPAEN;
@@ -42,7 +41,6 @@ void gpio_init(GPIO_TypeDef *gpio) {
     }
 }
 
-/* parameters: port, pin, mode (input/output) */
 void gpio_mode(GPIO_TypeDef *gpio, uint8_t pin, uint8_t mode) {
     if (pin >= 0 && pin < 8) {
         if (mode == GPIO_OUTPUT) { /* output */
@@ -65,7 +63,6 @@ void gpio_mode(GPIO_TypeDef *gpio, uint8_t pin, uint8_t mode) {
     }
 }
 
-/* parameters: port, pin */
 void gpio_set(GPIO_TypeDef *gpio, uint8_t pin) {
     if (pin >= 0 && pin < 16) {
         gpio->BSRR |= GPIO_BSRR_BSx(pin);
@@ -74,7 +71,6 @@ void gpio_set(GPIO_TypeDef *gpio, uint8_t pin) {
     }
 }
 
-/* parameters: port, pin */
 void gpio_reset(GPIO_TypeDef *gpio, uint8_t pin) {
     if (pin >= 0 && pin < 16) {
         gpio->BSRR |= GPIO_BSRR_BRx(pin);
@@ -83,7 +79,6 @@ void gpio_reset(GPIO_TypeDef *gpio, uint8_t pin) {
     }
 }
 
-/* parameters: port, pin */
 void gpio_toggle(GPIO_TypeDef *gpio, uint8_t pin) {
     if (pin >= 0 && pin < 16) {
         gpio->ODR ^= GPIO_ODR_ODRx(pin);
