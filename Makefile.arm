@@ -1,6 +1,7 @@
 CPU=cortex-m3
 
 LOCALBASE = /usr/local
+BUILD_DIR = build
 
 # toolchain
 CC = $(LOCALBASE)/bin/arm-none-eabi-gcc
@@ -37,11 +38,13 @@ DEPS =
 @echo "no LIB specified"
 .endif
 
+DRIVERS = drv/gpio.o
+
 all: build size
 
 build: obj elf
 
-obj: $(PROG).o $(DEPS) $(HAL_DEPS)
+obj: $(PROG).o $(DEPS) $(HAL_DEPS) $(DRIVERS)
 elf: $(PROG).elf
 
 .SUFFIXES: .s .S .c .o .elf .map
@@ -50,7 +53,8 @@ elf: $(PROG).elf
 	$(CC) -mcpu=$(CPU) -g -Os -c\
 		$(STM32_CMSIS_INC)\
 		$(STM32_HAL_INC)\
-		-DSTM32F103xB -o $(@:T) $<
+		-DSTM32F103xB\
+		-o $(BUILD_DIR)/$(@:T) $<
 .elif $(LIB) == opencm3
 	$(CC) -mcpu=$(CPU) -g -Os -c\
 		$(STM32_LIBOPENCM3_INC)\
@@ -62,12 +66,12 @@ elf: $(PROG).elf
 
 .o.elf:
 .if $(LIB) == cmsis
-	$(CC) $< $(DEPS) $(HAL_DEPS:T)\
+	$(CC) build/*.o\
 		-g -static -mcpu=$(CPU)\
-		-Wl,-Map,$(<:R).map,--gc-sections,--cref\
+		-Wl,-Map,$(BUILD_DIR)/$(<:R).map,--gc-sections,--cref\
 		-Wl,--start-group -lc -lgcc -lnosys -Wl,--end-group\
 		-T ./ld/stm32f1.ld\
-		-o $@
+		-o $(BUILD_DIR)/$@
 .elif $(LIB) == opencm3
 	$(CC) $< $(STM32_LIBOPENCM3_LIB) -lopencm3_stm32f1\
 		-mcpu=$(CPU)\
@@ -75,13 +79,13 @@ elf: $(PROG).elf
 		-Wl,-Map,$(<:R).map,--gc-sections,--cref\
 		-Wl,--start-group -lc -lgcc -lnosys -Wl,--end-group\
 		-T ./ld/stm32f103xb.ld\
-		-o $@
+		-o $(BUILD_DIR)/$@
 .else
 	@echo "no LIB specified"
 .endif
 
 startup-stm32f1.o:
-	$(AS) -mcpu=$(CPU) -g -o $@ $<
+	$(AS) -mcpu=$(CPU) -g -o $(BUILD_DIR)/$@ $<
 
 
 .PHONY: upload size disasm cmsistags opencm3tags debugd debug
@@ -101,7 +105,7 @@ upload:
 		-c "shutdown"
 
 size:
-	$(SIZE) $(PROG).elf
+	$(SIZE) $(BUILD_DIR)/$(PROG).elf
 
 disasm: $(PROG).elf
 	$(OBJDUMP) -h -S -t $(PROG).elf
@@ -115,4 +119,4 @@ opencm3tags:
 		./lib/libopencm3/lib ./lib/libopencm3/include
 
 clean:
-	rm -rf *.o *.elf *.map tags
+	rm -rf $(BUILD_DIR)/* tags
