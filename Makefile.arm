@@ -101,7 +101,7 @@ upload:
 	$(OPENOCD) -f $(OPENOCD_SCRIPTS)/interface/$(OPENOCD_INTERFACE)\
 		-f $(OPENOCD_SCRIPTS)/target/$(OPENOCD_TARGET)\
 		-c "init" -c "reset init"\
-		-c "flash write_image erase skel.elf"\
+		-c "flash write_image erase $(BUILD_DIR)/$(PROG).elf"\
 		-c "reset"\
 		-c "shutdown"
 
