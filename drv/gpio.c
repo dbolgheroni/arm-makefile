@@ -22,8 +22,7 @@
  * SOFTWARE.
  */
 
-#include <stm32f103xb.h>
-#include "gpio.h"
+#include <gpio.h>
 
 void gpio_init(GPIO_TypeDef *gpio) {
     if (gpio == GPIOA) {

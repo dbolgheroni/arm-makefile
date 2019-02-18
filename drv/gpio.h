@@ -22,6 +22,8 @@
  * SOFTWARE.
  */
 
+#include <stm32f103xb.h>
+
 #define GPIO_OUTPUT     0x1
 #define GPIO_INPUT      0x2
 
