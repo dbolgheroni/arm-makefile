@@ -38,7 +38,10 @@ DEPS =
 @echo "no LIB specified"
 .endif
 
+DRIVERS_INC = -I./drv
 DRIVERS = drv/gpio.o
+DRIVERS += drv/usart.o
+DRIVERS += drv/spi.o
 
 all: build size
 
