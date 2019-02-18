@@ -53,6 +53,7 @@ elf: $(PROG).elf
 	$(CC) -mcpu=$(CPU) -g -Os -c\
 		$(STM32_CMSIS_INC)\
 		$(STM32_HAL_INC)\
+		$(DRIVERS_INC)\
 		-DSTM32F103xB\
 		-o $(BUILD_DIR)/$(@:T) $<
 .elif $(LIB) == opencm3
