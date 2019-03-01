@@ -1,0 +1,149 @@
+/*
+ * MIT License
+ * 
+ * Copyright (c) 2019, Daniel Bolgheroni.
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+#include <stm32f103xb.h>
+#include <spi.h>
+#include <gpio.h>
+#include <spi.h>
+#include <usart.h>
+#include <util.h>
+
+#include <mcp2515.h>
+
+void _mcp2515_reset(void) {
+    gpio_reset(GPIOA, 4);
+    spi_send(SPI1, MCP2515_RESET_INSTR);
+    gpio_set(GPIOA, 4);
+    wait_cycles(1000);
+}
+
+uint8_t _mcp2515_read(uint8_t reg) {
+    uint8_t data;
+
+    gpio_reset(GPIOA, 4);
+    spi_send(SPI1, MCP2515_READ_INSTR);
+    spi_send(SPI1, reg);
+    data = spi_send(SPI1, 0x00);
+    gpio_set(GPIOA, 4);
+
+    return data;
+}
+
+uint8_t _mcp2515_read_rx_buffer(uint8_t buf) {
+    uint8_t data;
+
+    gpio_reset(GPIOA, 4);
+    spi_send(SPI1, MCP2515_READRXB_INSTR | buf);
+    data = spi_send(SPI1, 0x00);
+    gpio_set(GPIOA, 4);
+
+    return data;
+}
+
+void _mcp2515_write(uint8_t reg, uint8_t data) {
+    gpio_reset(GPIOA, 4);
+    spi_send(SPI1, MCP2515_WRITE_INSTR);
+    spi_send(SPI1, reg);
+    spi_send(SPI1, data);
+    gpio_set(GPIOA, 4);
+}
+
+void _mcp2515_load_tx_buffer(uint8_t buf, uint8_t data) {
+    gpio_reset(GPIOA, 4);
+    spi_send(SPI1, MCP2515_LOADTXB_INSTR | buf);
+    spi_send(SPI1, data);
+    gpio_set(GPIOA, 4);
+}
+
+void _mcp2515_rts(uint8_t buf) {
+    gpio_reset(GPIOA, 4);
+    spi_send(SPI1, MCP2515_RTS_INSTR | buf);
+    gpio_set(GPIOA, 4);
+}
+
+uint8_t _mcp2515_read_status(void) {
+    uint8_t status;
+
+    gpio_reset(GPIOA, 4);
+    spi_send(SPI1, MCP2515_READSTATUS_INSTR);
+    status = spi_send(SPI1, 0x00);
+    gpio_set(GPIOA, 4);
+
+    return status;
+}
+
+uint8_t _mcp2515_rx_status(void) {
+    uint8_t status;
+
+    gpio_reset(GPIOA, 4);
+    spi_send(SPI1, MCP2515_RXSTATUS_INSTR);
+    status = spi_send(SPI1, 0x00);
+    gpio_set(GPIOA, 4);
+
+    return status;
+}
+
+void _mcp2515_bit_modify(uint8_t reg, uint8_t mask, uint8_t data) {
+    gpio_reset(GPIOA, 4);
+    spi_send(SPI1, MCP2515_BITMODIFY_INSTR);
+    spi_send(SPI1, reg);
+    spi_send(SPI1, mask);
+    spi_send(SPI1, data);
+    gpio_set(GPIOA, 4);
+}
+
+void mcp2515_init(void) {
+    spi_master_init(SPI1, SPI_MODE0, SPI_BR32, SPI_MSB);
+    gpio_set(GPIOA, 4);
+
+    /* enter Configuration Mode */
+    _mcp2515_reset();
+
+    /* 50 Kbit/s */
+    _mcp2515_write(CNF1, 0x03);
+    _mcp2515_write(CNF2, 0xb4);
+    _mcp2515_write(CNF3, 0x06);
+
+    /* enter Normal Mode */
+    _mcp2515_bit_modify(CANCTRL0,
+            CANCTRL_REQOP2 | CANCTRL_REQOP1 | CANCTRL_REQOP0, 0x00);
+}
+
+void mcp2515_putc(uint8_t c) {
+    /* message id */
+    _mcp2515_write(TXB0SIDH, 0x55);
+    _mcp2515_write(TXB0SIDL, 0x40);
+
+    /* load tx buffer */
+    _mcp2515_write(TXB0D0, 'D');
+
+    /* 1-byte data length */
+    _mcp2515_write(TXB0DLC, 0x01);
+
+    /* request to send TXB0 */
+    _mcp2515_rts(MCP2515_RTS_TXB0);
+
+    /* clear TXB0 flag */
+    _mcp2515_bit_modify(CANINTF, CANINTF_TX0IF, 0x00);
+}
