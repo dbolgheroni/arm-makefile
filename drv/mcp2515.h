@@ -308,6 +308,21 @@
 #define RXB1CTRL_RXM0           (1 << 5)
 #define RXB1CTRL_RXM1           (1 << 6)
 
+/* oscillator (MHz) */
+#define OSC_8   0x1
+#define OSC_16  0x2
+
+/* baud rate (Kbps) */
+#define BR_5    0x1
+#define BR_10   0x2
+#define BR_50   0x3
+#define BR_125  0x4
+#define BR_250  0x5
+
+/* sample points (%) */
+#define SP_75   0x1    /* ARINC 825 */
+#define SP_875  0x2    /* DeviceNet, CANopen */
+#define SP_XX   0x3
 void _mcp2515_reset(void);
 uint8_t _mcp2515_read(uint8_t);
 uint8_t _mcp2515_read_rx_buffer(uint8_t);
@@ -318,5 +333,5 @@ uint8_t _mcp2515_read_status(void);
 uint8_t _mcp2515_rx_status(void);
 void _mcp2515_bit_modify(uint8_t, uint8_t, uint8_t);
 
-void mcp2515_init(void);
 void mcp2515_putc(uint8_t);
+char mcp2515_init(uint8_t, uint8_t, uint8_t);

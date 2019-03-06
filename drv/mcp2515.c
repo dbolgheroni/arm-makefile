@@ -113,17 +113,58 @@ void _mcp2515_bit_modify(uint8_t reg, uint8_t mask, uint8_t data) {
     gpio_set(GPIOA, 4);
 }
 
-void mcp2515_init(void) {
+const struct canconf {
+    uint8_t osc;
+    uint8_t br;
+    uint8_t sp;
+    uint8_t cnf1;
+    uint8_t cnf2;
+    uint8_t cnf3;
+} canconfbits[] = {
+    OSC_8, BR_5, SP_75, 0x27, 0xb6, 0x04,
+    OSC_8, BR_10, SP_75, 0x13, 0xb6, 0x04,
+    OSC_8, BR_50, SP_75, 0x03, 0xb6, 0x04,
+    OSC_8, BR_125, SP_75, 0x01, 0xac, 0x03,
+    OSC_8, BR_250, SP_75, 0x00, 0xac, 0x03,
+    OSC_8, BR_5, SP_875, 0x31, 0xb5, 0x01,
+    OSC_8, BR_10, SP_875, 0x18, 0xb5, 0x01,
+    OSC_8, BR_50, SP_875, 0x04, 0xb5, 0x01,
+    OSC_8, BR_125, SP_875, 0x01, 0xb5, 0x01,
+    OSC_8, BR_250, SP_875, 0xc0, 0xb5, 0x01,
+    0, 0, 0, 0, 0, 0,
+};
+
+char mcp2515_init(uint8_t osc, uint8_t br, uint8_t sp) {
+    const struct canconf *c;
+    char i, canset = 0;
+    uint8_t t;
+
     spi_master_init(SPI1, SPI_MODE0, SPI_BR32, SPI_MSB);
     gpio_set(GPIOA, 4);
 
     /* enter Configuration Mode */
     _mcp2515_reset();
 
-    /* 50 Kbit/s */
-    _mcp2515_write(CNF1, 0x03);
-    _mcp2515_write(CNF2, 0xb4);
-    _mcp2515_write(CNF3, 0x06);
+    for (c = canconfbits; c->osc; c++) {
+        if (osc == c->osc && br == c->br && sp == c->sp) {
+            _mcp2515_write(CNF1, c->cnf1);
+            _mcp2515_write(CNF2, c->cnf2);
+            _mcp2515_write(CNF3, c->cnf3);
+
+            /* check */
+            if ((_mcp2515_read(CNF1) != c->cnf1) ||
+                    (_mcp2515_read(CNF2) != c->cnf2) ||
+                    (_mcp2515_read(CNF3) != c->cnf3)) {
+                return -1;
+            }
+
+            canset = 1;
+        }
+    }
+
+    if (!canset) {
+        return -1;
+    }
 
     /* enter Normal Mode */
     _mcp2515_bit_modify(CANCTRL0,
@@ -136,7 +177,7 @@ void mcp2515_putc(uint8_t c) {
     _mcp2515_write(TXB0SIDL, 0x40);
 
     /* load tx buffer */
-    _mcp2515_write(TXB0D0, 'D');
+    _mcp2515_write(TXB0D0, c);
 
     /* 1-byte data length */
     _mcp2515_write(TXB0DLC, 0x01);
