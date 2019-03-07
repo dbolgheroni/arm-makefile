@@ -42,18 +42,18 @@ void gpio_init(GPIO_TypeDef *gpio) {
 
 void gpio_mode(GPIO_TypeDef *gpio, uint8_t pin, uint8_t mode) {
     if (pin >= 0 && pin < 8) {
-        if (mode == GPIO_OUTPUT) { /* output */
+        if (mode == GPIO_OUTPUT) { /* output max speed 2 MHz */
             gpio->CRL |= GPIO_CRL_MODEx_1(pin);
             gpio->CRL &= ~GPIO_CRL_CNFx_0(pin);
-        } else { /* input */
+        } else { /* input with pull-up / pull-down */
             gpio->CRL |= GPIO_CRL_CNFx_1(pin);
             gpio->CRL &= ~GPIO_CRL_CNFx_0(pin);
         }
     } else if (pin >= 8 && pin < 16) {
-        if (mode == GPIO_OUTPUT) { /* output */
+        if (mode == GPIO_OUTPUT) { /* output max speed 2 MHz */
             gpio->CRH |= GPIO_CRH_MODEx_1(pin);
             gpio->CRH &= ~GPIO_CRH_CNFx_0(pin);
-        } else { /* input */
+        } else { /* input with pull-up / pull-down */
             gpio->CRH |= GPIO_CRH_CNFx_1(pin);
             gpio->CRH &= ~GPIO_CRH_CNFx_0(pin);
         }
