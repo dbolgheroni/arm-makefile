@@ -64,7 +64,7 @@ void gpio_mode(GPIO_TypeDef *gpio, uint8_t pin, uint8_t mode) {
 
 void gpio_set(GPIO_TypeDef *gpio, uint8_t pin) {
     if (pin >= 0 && pin < 16) {
-        gpio->BSRR |= GPIO_BSRR_BSx(pin);
+        gpio->BSRR = GPIO_BSRR_BSx(pin);
     } else {
         return;
     }
@@ -72,7 +72,7 @@ void gpio_set(GPIO_TypeDef *gpio, uint8_t pin) {
 
 void gpio_reset(GPIO_TypeDef *gpio, uint8_t pin) {
     if (pin >= 0 && pin < 16) {
-        gpio->BSRR |= GPIO_BSRR_BRx(pin);
+        gpio->BSRR = GPIO_BSRR_BRx(pin);
     } else {
         return;
     }
