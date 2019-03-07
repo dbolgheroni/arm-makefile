@@ -308,6 +308,20 @@
 #define RXB1CTRL_RXM0           (1 << 5)
 #define RXB1CTRL_RXM1           (1 << 6)
 
+/* argument to mcp2515 putc */
+#define STDF       0x1
+#define EXTF       0x2
+
+/* masks for handling standard and extended frames */
+#define TXBnSIDL_STD       0x00000007
+#define TXBnSIDH_STD       0x000007F8
+#define TXBnEID0           0x000000FF
+#define TXBnEID8           0x0000FF00
+#define TXBnSIDL10         0x00030000
+#define TXBnSIDL75         0x001C0000
+#define TXBnSIDH           0x1FE00000
+#define TXBnSIDL_EXIDE     0x08
+
 /* oscillator (MHz) */
 #define OSC_8   0x1
 #define OSC_16  0x2
@@ -333,5 +347,5 @@ uint8_t _mcp2515_read_status(void);
 uint8_t _mcp2515_rx_status(void);
 void _mcp2515_bit_modify(uint8_t, uint8_t, uint8_t);
 
-void mcp2515_putc(uint8_t);
 char mcp2515_init(uint8_t, uint8_t, uint8_t);
+void mcp2515_putc(uint8_t, uint32_t, uint8_t);

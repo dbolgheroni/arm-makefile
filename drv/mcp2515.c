@@ -171,10 +171,32 @@ char mcp2515_init(uint8_t osc, uint8_t br, uint8_t sp) {
             CANCTRL_REQOP2 | CANCTRL_REQOP1 | CANCTRL_REQOP0, 0x00);
 }
 
-void mcp2515_putc(uint8_t c) {
-    /* message id */
-    _mcp2515_write(TXB0SIDH, 0x55);
-    _mcp2515_write(TXB0SIDL, 0x40);
+void mcp2515_putc(uint8_t ft, uint32_t id, uint8_t c) {
+    uint8_t txbnsidl;
+
+    /* standard frame */
+    if (ft == STDF) {
+        /* standard message id */
+        _mcp2515_write(TXB0SIDL, (uint8_t) ((id & TXBnSIDL_STD) << 5));
+        _mcp2515_write(TXB0SIDH, (uint8_t) ((id & TXBnSIDH_STD) >> 3));
+    } else if (ft == EXTF) {
+        /* write id on the respective 8-bit registers */
+        _mcp2515_write(TXB0EID0, (uint8_t) (id & TXBnEID0));
+        _mcp2515_write(TXB0EID8, (uint8_t) ((id & TXBnEID8) >> 8));
+
+        txbnsidl = (uint8_t) ((id & TXBnSIDL10) >> 16);
+        _usart_putc_bin(USART1, txbnsidl);
+        usart_puts(USART1, "\r\n");
+        txbnsidl = (uint8_t) (txbnsidl | ((id & TXBnSIDL75) >> 13));
+        _usart_putc_bin(USART1, txbnsidl);
+        usart_puts(USART1, "\r\n\n");
+        _mcp2515_write(TXB0SIDL, txbnsidl);
+
+        _mcp2515_write(TXB0SIDH, (uint8_t) ((id & TXBnSIDH) >> 21));
+
+        /* activate extended frame bit */
+        _mcp2515_write(TXB0SIDL, txbnsidl | TXBnSIDL_EXIDE);
+    }
 
     /* load tx buffer */
     _mcp2515_write(TXB0D0, c);
