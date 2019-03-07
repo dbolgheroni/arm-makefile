@@ -46,16 +46,16 @@ void gpio_mode(GPIO_TypeDef *gpio, uint8_t pin, uint8_t mode) {
             gpio->CRL |= GPIO_CRL_MODEx_1(pin);
             gpio->CRL &= ~GPIO_CRL_CNFx_0(pin);
         } else { /* input */
-            gpio->CRL &= GPIO_CRL_CNFx_0(pin);
             gpio->CRL |= GPIO_CRL_CNFx_1(pin);
+            gpio->CRL &= ~GPIO_CRL_CNFx_0(pin);
         }
     } else if (pin >= 8 && pin < 16) {
         if (mode == GPIO_OUTPUT) { /* output */
             gpio->CRH |= GPIO_CRH_MODEx_1(pin);
             gpio->CRH &= ~GPIO_CRH_CNFx_0(pin);
         } else { /* input */
-            gpio->CRH &= GPIO_CRH_CNFx_0(pin);
             gpio->CRH |= GPIO_CRH_CNFx_1(pin);
+            gpio->CRH &= ~GPIO_CRH_CNFx_0(pin);
         }
     } else {
         return;
