@@ -42,6 +42,7 @@ DRIVERS_INC = -I./drv
 DRIVERS = drv/gpio.o
 DRIVERS += drv/usart.o
 DRIVERS += drv/spi.o
+DRIVERS += drv/can.o
 DRIVERS += drv/mcp2515.o
 
 all: build size

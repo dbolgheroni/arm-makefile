@@ -22,6 +22,8 @@
  * SOFTWARE.
  */
 
+#include <can.h>
+
 /* MCP2515 instructions */
 #define MCP2515_RESET_INSTR             0xC0
 
@@ -191,6 +193,10 @@
 #define CANSTAT7        0x7E
 #define CANCTRL7        0x7F
 
+/* */
+#define TXBnDm(n, m)    ((TXB0D0) + ((n) * 10) + (m))
+#define TXBnDLC(n)      ((TXB0DLC) + ((n) * 10))
+
 /* MCP2515 registers flags */
 #define BFPCTRL_B0BFM           (1 << 0)
 #define BFPCTRL_B1BFM           (1 << 1)
@@ -337,6 +343,7 @@
 #define SP_75   0x1    /* ARINC 825 */
 #define SP_875  0x2    /* DeviceNet, CANopen */
 #define SP_XX   0x3
+
 void _mcp2515_reset(void);
 uint8_t _mcp2515_read(uint8_t);
 uint8_t _mcp2515_read_rx_buffer(uint8_t);
