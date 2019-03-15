@@ -187,11 +187,7 @@ void mcp2515_putc(uint8_t ft, uint32_t id, candata_t *d) {
         _mcp2515_write(TXB0EID8, (uint8_t) ((id & TXBnEID8) >> 8));
 
         txbnsidl = (uint8_t) ((id & TXBnSIDL10) >> 16);
-        _usart_putc_bin(USART1, txbnsidl);
-        usart_puts(USART1, "\r\n");
         txbnsidl = (uint8_t) (txbnsidl | ((id & TXBnSIDL75) >> 13));
-        _usart_putc_bin(USART1, txbnsidl);
-        usart_puts(USART1, "\r\n\n");
         _mcp2515_write(TXB0SIDL, txbnsidl);
 
         _mcp2515_write(TXB0SIDH, (uint8_t) ((id & TXBnSIDH) >> 21));
