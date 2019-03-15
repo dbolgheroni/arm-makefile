@@ -171,8 +171,10 @@ char mcp2515_init(uint8_t osc, uint8_t br, uint8_t sp) {
             CANCTRL_REQOP2 | CANCTRL_REQOP1 | CANCTRL_REQOP0, 0x00);
 }
 
-void mcp2515_putc(uint8_t ft, uint32_t id, uint8_t c) {
+void mcp2515_putc(uint8_t ft, uint32_t id, candata_t *d) {
     uint8_t txbnsidl;
+    unsigned int i = 0;
+    char const *p;
 
     /* standard frame */
     if (ft == STDF) {
@@ -198,11 +200,13 @@ void mcp2515_putc(uint8_t ft, uint32_t id, uint8_t c) {
         _mcp2515_write(TXB0SIDL, txbnsidl | TXBnSIDL_EXIDE);
     }
 
-    /* load tx buffer */
-    _mcp2515_write(TXB0D0, c);
+    /* load data byte registers */
+    for (i = 0; i < d->size; i++) {
+        _mcp2515_write(TXBnDm(0, i), (d->data)[i]);
+    }
 
-    /* 1-byte data length */
-    _mcp2515_write(TXB0DLC, 0x01);
+    /* load data lenght code register */
+    _mcp2515_write(TXB0DLC, d->size);
 
     /* request to send TXB0 */
     _mcp2515_rts(MCP2515_RTS_TXB0);

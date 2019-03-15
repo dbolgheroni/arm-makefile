@@ -355,4 +355,4 @@ uint8_t _mcp2515_rx_status(void);
 void _mcp2515_bit_modify(uint8_t, uint8_t, uint8_t);
 
 char mcp2515_init(uint8_t, uint8_t, uint8_t);
-void mcp2515_putc(uint8_t, uint32_t, uint8_t);
+void mcp2515_putc(uint8_t, uint32_t, candata_t *);
