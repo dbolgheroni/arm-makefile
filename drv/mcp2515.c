@@ -172,25 +172,30 @@ char mcp2515_init(uint8_t osc, uint8_t br, uint8_t sp) {
 }
 
 void mcp2515_putc(uint8_t ft, uint32_t id, candata_t *d) {
-    uint8_t txbnsidl;
+    uint8_t txbnsidl, txbnsidh, txbneid0, txbneid8;
     unsigned int i = 0;
     char const *p;
 
     /* standard frame */
     if (ft == STDF) {
-        /* standard message id */
-        _mcp2515_write(TXB0SIDL, (uint8_t) ((id & TXBnSIDL_STD) << 5));
-        _mcp2515_write(TXB0SIDH, (uint8_t) ((id & TXBnSIDH_STD) >> 3));
-    } else if (ft == EXTF) {
-        /* write id on the respective 8-bit registers */
-        _mcp2515_write(TXB0EID0, (uint8_t) (id & TXBnEID0));
-        _mcp2515_write(TXB0EID8, (uint8_t) ((id & TXBnEID8) >> 8));
+        txbnsidl = (uint8_t) ((id & TXBnSIDL_STD) << 5);
+        txbnsidh = (uint8_t) ((id & TXBnSIDH_STD) >> 3);
 
+        /* standard message id */
+        _mcp2515_write(TXB0SIDL, txbnsidl);
+        _mcp2515_write(TXB0SIDH, txbnsidh);
+    } else if (ft == EXTF) {
+        txbneid0 = (uint8_t) (id & TXBnEID0);
+        txbneid8 = (uint8_t) ((id & TXBnEID8) >> 8);
         txbnsidl = (uint8_t) ((id & TXBnSIDL10) >> 16);
         txbnsidl = (uint8_t) (txbnsidl | ((id & TXBnSIDL75) >> 13));
-        _mcp2515_write(TXB0SIDL, txbnsidl);
+        txbnsidh = (uint8_t) ((id & TXBnSIDH) >> 21);
 
-        _mcp2515_write(TXB0SIDH, (uint8_t) ((id & TXBnSIDH) >> 21));
+        /* write id on the respective 8-bit registers */
+        _mcp2515_write(TXB0EID0, txbneid0);
+        _mcp2515_write(TXB0EID8, txbneid8);
+        _mcp2515_write(TXB0SIDL, txbnsidl);
+        _mcp2515_write(TXB0SIDH, txbnsidh);
 
         /* activate extended frame bit */
         _mcp2515_write(TXB0SIDL, txbnsidl | TXBnSIDL_EXIDE);
