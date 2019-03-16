@@ -193,9 +193,16 @@
 #define CANSTAT7        0x7E
 #define CANCTRL7        0x7F
 
-/* */
-#define TXBnDm(n, m)    ((TXB0D0) + ((n) * 10) + (m))
-#define TXBnDLC(n)      ((TXB0DLC) + ((n) * 10))
+/* flex defs to support multiple TX buffers */
+#define TXBnDm(n, m)                    ((TXB0D0) + ((n) * 10) + (m))
+#define TXBnDLC(n)                      ((TXB0DLC) + ((n) * 10))
+#define MCP2515_RTS_TXBn(n)             (1 << (n))
+#define CANINTF_TXnIF(n)                (1 << ((n) + 2))
+#define MCP2515_LOADTXB_TXBnD0(n)       ((MCP2515_LOADTXB_TXB0D0) + (2 * (n)))
+#define TXBnSIDH(n)                     ((TXB0SIDH) + (10 * (n)))
+#define TXBnSIDL(n)                     ((TXB0SIDL) + (10 * (n)))
+#define TXBnEID8(n)                     ((TXB0EID8) + (10 * (n)))
+#define TXBnEID0(n)                     ((TXB0EID0) + (10 * (n)))
 
 /* MCP2515 registers flags */
 #define BFPCTRL_B0BFM           (1 << 0)
@@ -321,11 +328,11 @@
 /* masks for handling standard and extended frames */
 #define TXBnSIDL_STD       0x00000007
 #define TXBnSIDH_STD       0x000007F8
-#define TXBnEID0           0x000000FF
-#define TXBnEID8           0x0000FF00
-#define TXBnSIDL10         0x00030000
-#define TXBnSIDL75         0x001C0000
-#define TXBnSIDH           0x1FE00000
+#define TXBnEID0_EXT       0x000000FF
+#define TXBnEID8_EXT       0x0000FF00
+#define TXBnSIDL10_EXT     0x00030000
+#define TXBnSIDL75_EXT     0x001C0000
+#define TXBnSIDH_EXT       0x1FE00000
 #define TXBnSIDL_EXIDE     0x08
 
 /* oscillator (MHz) */

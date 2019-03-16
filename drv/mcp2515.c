@@ -173,8 +173,20 @@ char mcp2515_init(uint8_t osc, uint8_t br, uint8_t sp) {
 
 void mcp2515_putc(uint8_t ft, uint32_t id, candata_t *d) {
     uint8_t txbnsidl, txbnsidh, txbneid0, txbneid8;
+    uint8_t txbn = 0;
     unsigned int i = 0;
     char const *p;
+
+    /* try TXB0 */
+    if (!(_mcp2515_read(TXB0CTRL) & TXB0CTRL_TXREQ)) {
+        txbn = 0;
+    /* try TXB1 */
+    } else if (!(_mcp2515_read(TXB1CTRL) & TXB1CTRL_TXREQ)) {
+        txbn = 1;
+    /* try TXB2 */
+    } else if (!(_mcp2515_read(TXB2CTRL) & TXB2CTRL_TXREQ)) {
+        txbn = 2;
+    }
 
     /* standard frame */
     if (ft == STDF) {
@@ -182,36 +194,36 @@ void mcp2515_putc(uint8_t ft, uint32_t id, candata_t *d) {
         txbnsidh = (uint8_t) ((id & TXBnSIDH_STD) >> 3);
 
         /* standard message id */
-        _mcp2515_write(TXB0SIDL, txbnsidl);
-        _mcp2515_write(TXB0SIDH, txbnsidh);
+        _mcp2515_write(TXBnSIDL(txbn), txbnsidl);
+        _mcp2515_write(TXBnSIDH(txbn), txbnsidh);
     } else if (ft == EXTF) {
-        txbneid0 = (uint8_t) (id & TXBnEID0);
-        txbneid8 = (uint8_t) ((id & TXBnEID8) >> 8);
-        txbnsidl = (uint8_t) ((id & TXBnSIDL10) >> 16);
-        txbnsidl = (uint8_t) (txbnsidl | ((id & TXBnSIDL75) >> 13));
-        txbnsidh = (uint8_t) ((id & TXBnSIDH) >> 21);
+        txbneid0 = (uint8_t) (id & TXBnEID0_EXT);
+        txbneid8 = (uint8_t) ((id & TXBnEID8_EXT) >> 8);
+        txbnsidl = (uint8_t) ((id & TXBnSIDL10_EXT) >> 16);
+        txbnsidl = (uint8_t) (txbnsidl | ((id & TXBnSIDL75_EXT) >> 13));
+        txbnsidh = (uint8_t) ((id & TXBnSIDH_EXT) >> 21);
 
         /* write id on the respective 8-bit registers */
-        _mcp2515_write(TXB0EID0, txbneid0);
-        _mcp2515_write(TXB0EID8, txbneid8);
-        _mcp2515_write(TXB0SIDL, txbnsidl);
-        _mcp2515_write(TXB0SIDH, txbnsidh);
+        _mcp2515_write(TXBnEID0(txbn), txbneid0);
+        _mcp2515_write(TXBnEID8(txbn), txbneid8);
+        _mcp2515_write(TXBnSIDL(txbn), txbnsidl);
+        _mcp2515_write(TXBnSIDH(txbn), txbnsidh);
 
         /* activate extended frame bit */
-        _mcp2515_write(TXB0SIDL, txbnsidl | TXBnSIDL_EXIDE);
+        _mcp2515_write(TXBnSIDL(txbn), txbnsidl | TXBnSIDL_EXIDE);
     }
 
     /* load data byte registers */
     for (i = 0; i < d->size; i++) {
-        _mcp2515_write(TXBnDm(0, i), (d->data)[i]);
+        _mcp2515_write(TXBnDm(txbn, i), (d->data)[i]);
     }
 
-    /* load data lenght code register */
-    _mcp2515_write(TXB0DLC, d->size);
+    /* load data length code register */
+    _mcp2515_write(TXBnDLC(txbn), d->size);
 
-    /* request to send TXB0 */
-    _mcp2515_rts(MCP2515_RTS_TXB0);
+    /* request to send TXBn */
+    _mcp2515_rts(MCP2515_RTS_TXBn(txbn));
 
-    /* clear TXB0 flag */
-    _mcp2515_bit_modify(CANINTF, CANINTF_TX0IF, 0x00);
+    /* clear TXBn flag */
+    _mcp2515_bit_modify(CANINTF, CANINTF_TXnIF(txbn), 0x00);
 }
