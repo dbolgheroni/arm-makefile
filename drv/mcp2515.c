@@ -69,10 +69,32 @@ void _mcp2515_write(uint8_t reg, uint8_t data) {
     gpio_set(GPIOA, 4);
 }
 
-void _mcp2515_load_tx_buffer(uint8_t buf, uint8_t data) {
+void _mcp2515_load_tx_buffer(uint8_t buf, txbconf_t *c, candata_t *d) {
+    unsigned int i = 0;
+
     gpio_reset(GPIOA, 4);
     spi_send(SPI1, MCP2515_LOADTXB_INSTR | buf);
-    spi_send(SPI1, data);
+    spi_send(SPI1, c->txbnsidh);
+    spi_send(SPI1, c->txbnsidl);
+    spi_send(SPI1, c->txbneid8);
+    spi_send(SPI1, c->txbneid0);
+
+    spi_send(SPI1, d->size);
+    for (i = 0; i < d->size; i++) {
+        spi_send(SPI1, (d->data)[i]);
+    }
+
+    /* without optimized instructions (for testing purposes)
+    _mcp2515_write(TXB0SIDH, c->txbnsidh);
+    _mcp2515_write(TXB0SIDL, c->txbnsidl);
+    _mcp2515_write(TXB0EID8, c->txbneid8);
+    _mcp2515_write(TXB0EID0, c->txbneid0);
+    _mcp2515_write(TXB0DLC, d->size);
+    for (i = 0; i < d->size; i++) {
+        _mcp2515_write(TXBnDm(0, i), (d->data)[i]);
+    }
+    */
+
     gpio_set(GPIOA, 4);
 }
 
@@ -171,11 +193,10 @@ char mcp2515_init(uint8_t osc, uint8_t br, uint8_t sp) {
             CANCTRL_REQOP2 | CANCTRL_REQOP1 | CANCTRL_REQOP0, 0x00);
 }
 
-void mcp2515_putc(uint8_t ft, uint32_t id, candata_t *d) {
-    uint8_t txbnsidl, txbnsidh, txbneid0, txbneid8;
+void mcp2515_putc(uint8_t ft, const uint32_t id, candata_t *d) {
+    uint8_t txbnsidl;
     uint8_t txbn = 0;
-    unsigned int i = 0;
-    char const *p;
+    txbconf_t c;
 
     /* try TXB0 */
     if (!(_mcp2515_read(TXB0CTRL) & TXB0CTRL_TXREQ)) {
@@ -190,40 +211,39 @@ void mcp2515_putc(uint8_t ft, uint32_t id, candata_t *d) {
 
     /* standard frame */
     if (ft == STDF) {
-        txbnsidl = (uint8_t) ((id & TXBnSIDL_STD) << 5);
-        txbnsidh = (uint8_t) ((id & TXBnSIDH_STD) >> 3);
+        c.txbnsidh = (uint8_t) ((id & TXBnSIDH_STD) >> 3);
+        c.txbnsidl = (uint8_t) ((id & TXBnSIDL_STD) << 5);
+        c.txbneid8 = 0x00;
+        c.txbneid0 = 0x00;
 
-        /* standard message id */
-        _mcp2515_write(TXBnSIDL(txbn), txbnsidl);
-        _mcp2515_write(TXBnSIDH(txbn), txbnsidh);
+        /* load TXB */
+        _mcp2515_load_tx_buffer(MCP2515_LOADTXB_TXBnSIDH(txbn), &c, d);
+
+        /* request to send TXBn */
+        _mcp2515_rts(MCP2515_RTS_TXBn(txbn));
+
+        /* clear TXBn flag */
+        _mcp2515_bit_modify(CANINTF, CANINTF_TXnIF(txbn), 0x00);
+
     } else if (ft == EXTF) {
-        txbneid0 = (uint8_t) (id & TXBnEID0_EXT);
-        txbneid8 = (uint8_t) ((id & TXBnEID8_EXT) >> 8);
         txbnsidl = (uint8_t) ((id & TXBnSIDL10_EXT) >> 16);
         txbnsidl = (uint8_t) (txbnsidl | ((id & TXBnSIDL75_EXT) >> 13));
-        txbnsidh = (uint8_t) ((id & TXBnSIDH_EXT) >> 21);
 
-        /* write id on the respective 8-bit registers */
-        _mcp2515_write(TXBnEID0(txbn), txbneid0);
-        _mcp2515_write(TXBnEID8(txbn), txbneid8);
-        _mcp2515_write(TXBnSIDL(txbn), txbnsidl);
-        _mcp2515_write(TXBnSIDH(txbn), txbnsidh);
+        c.txbnsidh = (uint8_t) ((id & TXBnSIDH_EXT) >> 21);
+        c.txbnsidl = txbnsidl;
+        c.txbneid8 = (uint8_t) ((id & TXBnEID8_EXT) >> 8);
+        c.txbneid0 = (uint8_t) (id & TXBnEID0_EXT);
+
+        /* load TXB */
+        _mcp2515_load_tx_buffer(MCP2515_LOADTXB_TXBnSIDH(txbn), &c, d);
 
         /* activate extended frame bit */
-        _mcp2515_write(TXBnSIDL(txbn), txbnsidl | TXBnSIDL_EXIDE);
+        _mcp2515_write(TXBnSIDL(txbn), c.txbnsidl | TXBnSIDL_EXIDE);
+
+        /* request to send TXBn */
+        _mcp2515_rts(MCP2515_RTS_TXBn(txbn));
+
+        /* clear TXBn flag */
+        _mcp2515_bit_modify(CANINTF, CANINTF_TXnIF(txbn), 0x00);
     }
-
-    /* load data length code register */
-    _mcp2515_write(TXBnDLC(txbn), d->size);
-
-    /* load data byte registers */
-    for (i = 0; i < d->size; i++) {
-        _mcp2515_write(TXBnDm(txbn, i), (d->data)[i]);
-    }
-
-    /* request to send TXBn */
-    _mcp2515_rts(MCP2515_RTS_TXBn(txbn));
-
-    /* clear TXBn flag */
-    _mcp2515_bit_modify(CANINTF, CANINTF_TXnIF(txbn), 0x00);
 }

@@ -203,6 +203,7 @@
 #define TXBnSIDL(n)                     ((TXB0SIDL) + (10 * (n)))
 #define TXBnEID8(n)                     ((TXB0EID8) + (10 * (n)))
 #define TXBnEID0(n)                     ((TXB0EID0) + (10 * (n)))
+#define MCP2515_LOADTXB_TXBnSIDH(n)     ((MCP2515_LOADTXB_TXB0SIDH) + 2 * (n))
 
 /* MCP2515 registers flags */
 #define BFPCTRL_B0BFM           (1 << 0)
@@ -351,15 +352,23 @@
 #define SP_875  0x2    /* DeviceNet, CANopen */
 #define SP_XX   0x3
 
+/* conf */
+typedef struct {
+    uint8_t txbnsidh;
+    uint8_t txbnsidl;
+    uint8_t txbneid8;
+    uint8_t txbneid0;
+} txbconf_t;
+
 void _mcp2515_reset(void);
 uint8_t _mcp2515_read(uint8_t);
 uint8_t _mcp2515_read_rx_buffer(uint8_t);
 void _mcp2515_write(uint8_t, uint8_t);
-void _mcp2515_load_tx_buffer(uint8_t, uint8_t);
+void _mcp2515_load_tx_buffer(uint8_t, txbconf_t *, candata_t *);
 void _mcp2515_rts(uint8_t);
 uint8_t _mcp2515_read_status(void);
 uint8_t _mcp2515_rx_status(void);
 void _mcp2515_bit_modify(uint8_t, uint8_t, uint8_t);
 
 char mcp2515_init(uint8_t, uint8_t, uint8_t);
-void mcp2515_putc(uint8_t, uint32_t, candata_t *);
+void mcp2515_putc(uint8_t, const uint32_t, candata_t *);
