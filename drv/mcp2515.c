@@ -213,13 +213,13 @@ void mcp2515_putc(uint8_t ft, uint32_t id, candata_t *d) {
         _mcp2515_write(TXBnSIDL(txbn), txbnsidl | TXBnSIDL_EXIDE);
     }
 
+    /* load data length code register */
+    _mcp2515_write(TXBnDLC(txbn), d->size);
+
     /* load data byte registers */
     for (i = 0; i < d->size; i++) {
         _mcp2515_write(TXBnDm(txbn, i), (d->data)[i]);
     }
-
-    /* load data length code register */
-    _mcp2515_write(TXBnDLC(txbn), d->size);
 
     /* request to send TXBn */
     _mcp2515_rts(MCP2515_RTS_TXBn(txbn));
