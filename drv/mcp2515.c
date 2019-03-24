@@ -156,7 +156,7 @@ const struct canconf {
     0, 0, 0, 0, 0, 0,
 };
 
-char mcp2515_init(uint8_t osc, uint8_t br, uint8_t sp) {
+int mcp2515_init(uint8_t osc, uint8_t br, uint8_t sp) {
     const struct canconf *c;
     char i, canset = 0;
     uint8_t t;
