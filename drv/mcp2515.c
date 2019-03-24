@@ -156,10 +156,26 @@ const struct canconf {
     0, 0, 0, 0, 0, 0,
 };
 
+void _enable_pb10_int(void) {
+    /* enable external interrupt line */
+    RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
+    NVIC_EnableIRQ(EXTI15_10_IRQn);
+    EXTI->IMR |= EXTI_IMR_MR10;
+    EXTI->FTSR |= EXTI_FTSR_TR10;
+
+    /* PB10 as interrupt line */
+    RCC->APB2ENR |= RCC_APB2ENR_IOPBEN;
+    GPIOB->CRH &= ~GPIO_CRH_MODE10;
+    GPIOB->CRH |= GPIO_CRH_CNF10_1;
+    GPIOB->CRH &= ~GPIO_CRH_CNF10_0;
+    GPIOB->ODR |= GPIO_ODR_ODR10;
+
+    AFIO->EXTICR[2] |= AFIO_EXTICR3_EXTI10_PB;
+}
+
 int mcp2515_init(uint8_t osc, uint8_t br, uint8_t sp) {
     const struct canconf *c;
     char i, canset = 0;
-    uint8_t t;
 
     spi_master_init(SPI1, SPI_MODE0, SPI_BR32, SPI_MSB);
     gpio_set(GPIOA, 4);
@@ -188,9 +204,45 @@ int mcp2515_init(uint8_t osc, uint8_t br, uint8_t sp) {
         return -1;
     }
 
+    /* board led debug */
+    gpio_init(GPIOC);
+    gpio_mode(GPIOC, 13, GPIO_OUTPUT);
+
+    /* receives any message */
+    _mcp2515_bit_modify(RXB0CTRL, RXB0CTRL_RXM1 | RXB0CTRL_RXM0, 0xFF);
+
+    /* enable external interrupts */
+    _enable_pb10_int();
+
+    /* enable MCP2515 interrupts */
+    _mcp2515_bit_modify(CANINTE, CANINTE_RX0IE | CANINTE_RX1IE |
+            CANINTE_ERRIE | CANINTE_MERRE, 0xFF);
+
     /* enter Normal Mode */
     _mcp2515_bit_modify(CANCTRL0,
             CANCTRL_REQOP2 | CANCTRL_REQOP1 | CANCTRL_REQOP0, 0x00);
+}
+
+/* irq handler */
+void EXTI15_10_IRQHandler(void) {
+    uint8_t readstatus;
+
+    NVIC_DisableIRQ(EXTI15_10_IRQn);
+
+    gpio_toggle(GPIOC, 13);
+
+    readstatus = _mcp2515_read_status();
+    _mcp2515_read(CANINTF);
+    _mcp2515_read(CANSTAT2);
+    _mcp2515_read(EFLG);
+
+    /* received message */
+    if (readstatus & MCP2515_READSTATUS_RX0IF) {
+        _mcp2515_bit_modify(CANINTF, CANINTF_RX0IF, 0x00);
+    }
+
+    EXTI->PR |= EXTI_PR_PR10;
+    NVIC_EnableIRQ(EXTI15_10_IRQn);
 }
 
 void mcp2515_putc(uint8_t ft, const uint32_t id, candata_t *d) {
