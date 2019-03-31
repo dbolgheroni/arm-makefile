@@ -250,6 +250,7 @@ void mcp2515_putc(uint8_t ft, const uint32_t id, candata_t *d) {
     uint8_t txbn = 0;
     txbconf_t c;
 
+    NVIC_DisableIRQ(EXTI15_10_IRQn);
     /* try TXB0 */
     if (!(_mcp2515_read(TXB0CTRL) & TXB0CTRL_TXREQ)) {
         txbn = 0;
@@ -298,4 +299,6 @@ void mcp2515_putc(uint8_t ft, const uint32_t id, candata_t *d) {
         /* clear TXBn flag */
         _mcp2515_bit_modify(CANINTF, CANINTF_TXnIF(txbn), 0x00);
     }
+
+    NVIC_EnableIRQ(EXTI15_10_IRQn);
 }
