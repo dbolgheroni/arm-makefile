@@ -50,12 +50,22 @@ uint8_t _mcp2515_read(uint8_t reg) {
     return data;
 }
 
-uint8_t _mcp2515_read_rx_buffer(uint8_t buf) {
+uint8_t _mcp2515_read_rx_buffer(uint8_t buf, candata_t *d) {
     uint8_t data;
+    int i;
 
     gpio_reset(GPIOA, 4);
     spi_send(SPI1, MCP2515_READRXB_INSTR | buf);
-    data = spi_send(SPI1, 0x00);
+    spi_send(SPI1, 0x00); /* ignore sidh */
+    spi_send(SPI1, 0x00); /* ignore sidl */
+    spi_send(SPI1, 0x00); /* ignore eid8 */
+    spi_send(SPI1, 0x00); /* ignore eid0 */
+    d->size = spi_send(SPI1, 0x00);
+
+    for (i = 0; i < d->size; i++) {
+        d->data[i] = spi_send(SPI1, 0x00);
+    }
+
     gpio_set(GPIOA, 4);
 
     return data;

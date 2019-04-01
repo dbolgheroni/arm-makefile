@@ -362,7 +362,7 @@ typedef struct {
 
 void _mcp2515_reset(void);
 uint8_t _mcp2515_read(uint8_t);
-uint8_t _mcp2515_read_rx_buffer(uint8_t);
+uint8_t _mcp2515_read_rx_buffer(uint8_t, candata_t *);
 void _mcp2515_write(uint8_t, uint8_t);
 void _mcp2515_load_tx_buffer(uint8_t, txbconf_t *, candata_t *);
 void _mcp2515_rts(uint8_t);
