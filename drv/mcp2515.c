@@ -219,7 +219,8 @@ int mcp2515_init(uint8_t osc, uint8_t br, uint8_t sp) {
     gpio_mode(GPIOC, 13, GPIO_OUTPUT);
 
     /* receives any message */
-    _mcp2515_bit_modify(RXB0CTRL, RXB0CTRL_RXM1 | RXB0CTRL_RXM0, 0xFF);
+    _mcp2515_bit_modify(RXB0CTRL, RXB0CTRL_RXM1 | RXB0CTRL_RXM0 |
+            RXB0CTRL_BUKT, 0xFF);
 
     /* enable external interrupts */
     _enable_pb10_int();
@@ -235,20 +236,29 @@ int mcp2515_init(uint8_t osc, uint8_t br, uint8_t sp) {
 
 /* irq handler */
 void EXTI15_10_IRQHandler(void) {
-    uint8_t readstatus;
+    uint8_t read_status;
+    extern candata_t rxb0, rxb1;
+    extern char rx0, rx1;
 
     NVIC_DisableIRQ(EXTI15_10_IRQn);
 
     gpio_toggle(GPIOC, 13);
 
-    readstatus = _mcp2515_read_status();
+    read_status = _mcp2515_read_status();
     _mcp2515_read(CANINTF);
     _mcp2515_read(CANSTAT2);
     _mcp2515_read(EFLG);
 
-    /* received message */
-    if (readstatus & MCP2515_READSTATUS_RX0IF) {
+    /* received frame */
+    if (read_status & MCP2515_READSTATUS_RX0IF) {
         _mcp2515_bit_modify(CANINTF, CANINTF_RX0IF, 0x00);
+        _mcp2515_read_rx_buffer(MCP2515_READRXB_RXB0SIDH, &rxb0);
+        rx0 = 1;
+    }
+    if (read_status & MCP2515_READSTATUS_RX1IF) {
+        _mcp2515_bit_modify(CANINTF, CANINTF_RX1IF, 0x00);
+        _mcp2515_read_rx_buffer(MCP2515_READRXB_RXB1SIDH, &rxb1);
+        rx1 = 1;
     }
 
     EXTI->PR |= EXTI_PR_PR10;
