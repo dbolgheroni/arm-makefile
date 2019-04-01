@@ -276,7 +276,7 @@ void EXTI15_10_IRQHandler(void) {
     NVIC_EnableIRQ(EXTI15_10_IRQn);
 }
 
-void mcp2515_putc(uint8_t ft, const uint32_t id, candata_t *d) {
+void mcp2515_send(uint8_t ft, const uint32_t id, const int prio, candata_t *d) {
     uint8_t txbnsidl;
     uint8_t txbn = 0;
     uint8_t read_status;
@@ -288,12 +288,15 @@ void mcp2515_putc(uint8_t ft, const uint32_t id, candata_t *d) {
 
     /* try TXB0 */
     if (!(read_status & MCP2515_READSTATUS_TX0REQ)) {
+        _mcp2515_bit_modify(TXB0CTRL, TXB0CTRL_TXP1 | TXB0CTRL_TXP0, prio);
         txbn = 0;
     /* try TXB1 */
     } else if (!(read_status & MCP2515_READSTATUS_TX1REQ)) {
+        _mcp2515_bit_modify(TXB1CTRL, TXB1CTRL_TXP1 | TXB1CTRL_TXP0, prio);
         txbn = 1;
     /* try TXB2 */
     } else if (!(read_status & MCP2515_READSTATUS_TX2REQ)) {
+        _mcp2515_bit_modify(TXB2CTRL, TXB2CTRL_TXP1 | TXB2CTRL_TXP0, prio);
         txbn = 2;
     }
 

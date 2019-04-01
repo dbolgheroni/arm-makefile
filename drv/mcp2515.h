@@ -344,6 +344,12 @@
 #define TXBnSIDH_EXT       0x1FE00000
 #define TXBnSIDL_EXIDE     0x08
 
+/* message priority */
+#define HIGHEST                 0x3
+#define HIGH                    0x2
+#define LOW                     0x1
+#define LOWEST                  0x0
+
 /* oscillator (MHz) */
 #define OSC_8   0x1
 #define OSC_16  0x2
@@ -380,4 +386,4 @@ void _mcp2515_bit_modify(uint8_t, uint8_t, uint8_t);
 
 void _enable_pb10_int(void);
 int mcp2515_init(uint8_t, uint8_t, uint8_t);
-void mcp2515_putc(uint8_t, const uint32_t, candata_t *);
+void mcp2515_send(uint8_t, const uint32_t, const int, candata_t *);
