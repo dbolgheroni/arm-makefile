@@ -227,7 +227,7 @@ int mcp2515_init(uint8_t osc, uint8_t br, uint8_t sp) {
 
     /* enable MCP2515 interrupts */
     _mcp2515_bit_modify(CANINTE, CANINTE_RX0IE | CANINTE_RX1IE |
-            CANINTE_ERRIE | CANINTE_MERRE, 0xFF);
+            CANINTE_TX0IE | CANINTE_TX1IE | CANINTE_TX2IE, 0xFF);
 
     /* enter Normal Mode */
     _mcp2515_bit_modify(CANCTRL0,
@@ -248,6 +248,17 @@ void EXTI15_10_IRQHandler(void) {
     _mcp2515_read(CANINTF);
     _mcp2515_read(CANSTAT2);
     _mcp2515_read(EFLG);
+
+    /* sent frame */
+    if (read_status & MCP2515_READSTATUS_TX0IF) {
+        _mcp2515_bit_modify(CANINTF, CANINTF_TX0IF, 0x00);
+    }
+    if (read_status & MCP2515_READSTATUS_TX1IF) {
+        _mcp2515_bit_modify(CANINTF, CANINTF_TX1IF, 0x00);
+    }
+    if (read_status & MCP2515_READSTATUS_TX2IF) {
+        _mcp2515_bit_modify(CANINTF, CANINTF_TX2IF, 0x00);
+    }
 
     /* received frame */
     if (read_status & MCP2515_READSTATUS_RX0IF) {
