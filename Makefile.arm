@@ -1,7 +1,7 @@
 CPU=cortex-m3
 
 LOCALBASE = /usr/local
-BUILD_DIR = build
+MAKEOBJDIR = obj
 
 # toolchain
 CC = $(LOCALBASE)/bin/arm-none-eabi-gcc
@@ -16,51 +16,47 @@ OPENOCD_SCRIPTS = $(LOCALBASE)/share/openocd/scripts
 CTAGS = $(LOCALBASE)/bin/uctags
 
 # CMSIS
-STM32_CMSIS_INC = -I./stm32cubef1/cmsis/include/stm32
-STM32_CMSIS_INC += -I./stm32cubef1/cmsis/include/cm3
+STM32_CMSIS_INC = -I$(.CURDIR)/stm32cubef1/cmsis/include/stm32
+STM32_CMSIS_INC += -I$(.CURDIR)/stm32cubef1/cmsis/include/cm3
 
 # HAL
-STM32_HAL_INC = -I./stm32cubef1/hal/include
-STM32_HAL_SRC_DIR = ./stm32cubef1/hal/src
+STM32_HAL_INC = -I$(.CURDIR)/stm32cubef1/hal/include
+STM32_HAL_SRC_DIR = $(.CURDIR)/stm32cubef1/hal/src
 
 # libopencm3
-STM32_LIBOPENCM3_INC = -I./lib/libopencm3/include
-STM32_LIBOPENCM3_LIB = -L./lib/libopencm3/lib
+STM32_LIBOPENCM3_INC = -I$(.CURDIR)/lib/libopencm3/include
+STM32_LIBOPENCM3_LIB = -L$(.CURDIR)/lib/libopencm3/lib
 
 .if $(LIB) == cmsis
-DEPS = startup-stm32f1.o system-stm32f1.o
-HAL_DEPS = $(STM32_HAL_SRC_DIR)/stm32f1xx_hal.o
-HAL_DEPS += $(STM32_HAL_SRC_DIR)/stm32f1xx_hal_gpio.o
-HAL_DEPS += $(STM32_HAL_SRC_DIR)/stm32f1xx_hal_cortex.o
+DEPS = startup-stm32f1 system-stm32f1
+HAL_DEPS = stm32f1xx_hal stm32f1xx_hal_cortex
+HAL_DEPS += stm32f1xx_hal_gpio stm32f1xx_hal_spi
 .elif $(LIB) == opencm3
 DEPS = 
 .else
 @echo "no LIB specified"
 .endif
 
-DRIVERS_INC = -I./drv
-DRIVERS = drv/gpio.o
-DRIVERS += drv/usart.o
-DRIVERS += drv/spi.o
-DRIVERS += drv/can.o
-DRIVERS += drv/mcp2515.o
+DRIVERS_INC = -I$(.CURDIR)/drv
+DRIVERS = gpio util usart spi can mcp2515 display
 
 all: build size
 
 build: obj elf
 
-obj: $(PROG).o $(DEPS) $(HAL_DEPS) $(DRIVERS)
+obj: $(PROG).o $(DEPS:S/$/.o/g) $(HAL_DEPS:S/$/.o/g) $(DRIVERS:S/$/.o/g)
 elf: $(PROG).elf
 
-.SUFFIXES: .s .S .c .o .elf .map
+.PATH: $(.CURDIR)/stm32cubef1/hal/src $(.CURDIR)/drv
+.SUFFIXES: .c .o .elf
 .c.o:
 .if $(LIB) == cmsis
-	$(CC) -mcpu=$(CPU) -g -Os -c\
+	$(CC) -g -Os -c -mcpu=$(CPU)\
 		$(STM32_CMSIS_INC)\
 		$(STM32_HAL_INC)\
 		$(DRIVERS_INC)\
 		-DSTM32F103xB\
-		-o $(BUILD_DIR)/$(@:T) $<
+		-o $(@:T) $<
 .elif $(LIB) == opencm3
 	$(CC) -mcpu=$(CPU) -g -Os -c\
 		$(STM32_LIBOPENCM3_INC)\
@@ -72,12 +68,12 @@ elf: $(PROG).elf
 
 .o.elf:
 .if $(LIB) == cmsis
-	$(CC) build/*.o\
+	$(CC) $(.OBJDIR)/*.o\
 		-g -static -mcpu=$(CPU)\
-		-Wl,-Map,$(BUILD_DIR)/$(<:R).map,--gc-sections,--cref\
+		-Wl,-Map,$(<:R).map,--gc-sections,--cref\
 		-Wl,--start-group -lc -lgcc -lnosys -Wl,--end-group\
-		-T ./ld/stm32f1.ld\
-		-o $(BUILD_DIR)/$@
+		-T $(.CURDIR)/ld/stm32f1.ld\
+		-o $@
 .elif $(LIB) == opencm3
 	$(CC) $< $(STM32_LIBOPENCM3_LIB) -lopencm3_stm32f1\
 		-mcpu=$(CPU)\
@@ -85,13 +81,13 @@ elf: $(PROG).elf
 		-Wl,-Map,$(<:R).map,--gc-sections,--cref\
 		-Wl,--start-group -lc -lgcc -lnosys -Wl,--end-group\
 		-T ./ld/stm32f103xb.ld\
-		-o $(BUILD_DIR)/$@
+		-o $@
 .else
 	@echo "no LIB specified"
 .endif
 
 startup-stm32f1.o:
-	$(AS) -mcpu=$(CPU) -g -o $(BUILD_DIR)/$@ $<
+	$(AS) -mcpu=$(CPU) -g -o $@ $<
 
 
 .PHONY: upload size disasm cmsistags opencm3tags debugd debug
@@ -100,18 +96,18 @@ debugd:
 		-f $(OPENOCD_SCRIPTS)/target/$(OPENOCD_TARGET)
 
 debug:
-	$(DB) -x arm-debug.gdb $(BUILD_DIR)/skel.elf
+	$(DB) -x arm-debug.gdb skel.elf
 
 upload:
 	$(OPENOCD) -f $(OPENOCD_SCRIPTS)/interface/$(OPENOCD_INTERFACE)\
 		-f $(OPENOCD_SCRIPTS)/target/$(OPENOCD_TARGET)\
 		-c "init" -c "reset init"\
-		-c "flash write_image erase $(BUILD_DIR)/$(PROG).elf"\
+		-c "flash write_image erase $(PROG).elf"\
 		-c "reset"\
 		-c "shutdown"
 
 size:
-	$(SIZE) $(BUILD_DIR)/$(PROG).elf
+	$(SIZE) $(PROG).elf
 
 disasm: $(PROG).elf
 	$(OBJDUMP) -h -S -t $(PROG).elf
@@ -125,4 +121,4 @@ opencm3tags:
 		./lib/libopencm3/lib ./lib/libopencm3/include
 
 clean:
-	rm -rf $(BUILD_DIR)/* tags
+	rm -rf $(.OBJDIR)/* tags
