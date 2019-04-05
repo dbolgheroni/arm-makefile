@@ -23,22 +23,14 @@ STM32_CMSIS_INC += -I$(.CURDIR)/stm32cubef1/cmsis/include/cm3
 STM32_HAL_INC = -I$(.CURDIR)/stm32cubef1/hal/include
 STM32_HAL_SRC_DIR = $(.CURDIR)/stm32cubef1/hal/src
 
-# libopencm3
-STM32_LIBOPENCM3_INC = -I$(.CURDIR)/lib/libopencm3/include
-STM32_LIBOPENCM3_LIB = -L$(.CURDIR)/lib/libopencm3/lib
-
-.if $(LIB) == cmsis
 DEPS = startup-stm32f1 system-stm32f1
 HAL_DEPS = stm32f1xx_hal stm32f1xx_hal_cortex
 HAL_DEPS += stm32f1xx_hal_gpio stm32f1xx_hal_spi
-.elif $(LIB) == opencm3
-DEPS = 
-.else
-@echo "no LIB specified"
-.endif
 
 DRIVERS_INC = -I$(.CURDIR)/drv
 DRIVERS = gpio util usart spi can mcp2515 display
+
+.PATH: $(.CURDIR)/stm32cubef1/hal/src $(.CURDIR)/drv
 
 all: build size
 
@@ -47,50 +39,27 @@ build: obj elf
 obj: $(PROG).o $(DEPS:S/$/.o/g) $(HAL_DEPS:S/$/.o/g) $(DRIVERS:S/$/.o/g)
 elf: $(PROG).elf
 
-.PATH: $(.CURDIR)/stm32cubef1/hal/src $(.CURDIR)/drv
 .SUFFIXES: .c .o .elf
 .c.o:
-.if $(LIB) == cmsis
 	$(CC) -g -Os -c -mcpu=$(CPU)\
 		$(STM32_CMSIS_INC)\
 		$(STM32_HAL_INC)\
 		$(DRIVERS_INC)\
 		-DSTM32F103xB\
 		-o $(@:T) $<
-.elif $(LIB) == opencm3
-	$(CC) -mcpu=$(CPU) -g -Os -c\
-		$(STM32_LIBOPENCM3_INC)\
-		$(STM32_CMSIS_INC)\
-		-DSTM32F1 -o $@ $<
-.else
-	@echo "no LIB specified"
-.endif
 
 .o.elf:
-.if $(LIB) == cmsis
 	$(CC) $(.OBJDIR)/*.o\
 		-g -static -mcpu=$(CPU)\
 		-Wl,-Map,$(<:R).map,--gc-sections,--cref\
 		-Wl,--start-group -lc -lgcc -lnosys -Wl,--end-group\
 		-T $(.CURDIR)/ld/stm32f1.ld\
 		-o $@
-.elif $(LIB) == opencm3
-	$(CC) $< $(STM32_LIBOPENCM3_LIB) -lopencm3_stm32f1\
-		-mcpu=$(CPU)\
-		-static -nostartfiles\
-		-Wl,-Map,$(<:R).map,--gc-sections,--cref\
-		-Wl,--start-group -lc -lgcc -lnosys -Wl,--end-group\
-		-T ./ld/stm32f103xb.ld\
-		-o $@
-.else
-	@echo "no LIB specified"
-.endif
 
 startup-stm32f1.o:
 	$(AS) -mcpu=$(CPU) -g -o $@ $<
 
-
-.PHONY: upload size disasm cmsistags opencm3tags debugd debug
+.PHONY: upload size disasm cmsistags debugd debug
 debugd:
 	$(OPENOCD) -f $(OPENOCD_SCRIPTS)/interface/$(OPENOCD_INTERFACE)\
 		-f $(OPENOCD_SCRIPTS)/target/$(OPENOCD_TARGET)
@@ -112,13 +81,9 @@ size:
 disasm: $(PROG).elf
 	$(OBJDUMP) -h -S -t $(PROG).elf
 
-cmsistags:
+tags:
 	$(CTAGS) -f cmsistags -R --format=1 --languages=C,C++ \
 		./lib/libopencmsis/include
-
-opencm3tags:
-	$(CTAGS) -f opencm3tags -R --format=1 --languages=C,C++ \
-		./lib/libopencm3/lib ./lib/libopencm3/include
 
 clean:
 	rm -rf $(.OBJDIR)/* tags
