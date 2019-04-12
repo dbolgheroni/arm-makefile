@@ -1,8 +1,13 @@
-typedef struct {
-    unsigned int size;
+#include <stddef.h>
+
+struct can_frame {
+    size_t dlc;
     uint8_t data[8];
-} candata_t;
+};
+
+typedef struct can_frame can_frame_t;
 
 void can_init(CAN_TypeDef *);
-void candata_init(candata_t *);
-void candata_add(candata_t *, uint8_t);
+
+struct can_frame *can_frame_init();
+void can_frame_add(struct can_frame *, uint8_t);

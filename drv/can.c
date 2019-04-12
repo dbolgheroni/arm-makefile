@@ -1,4 +1,5 @@
 #include <stm32f103xb.h>
+#include <stdlib.h>
 #include <can.h>
 
 void can_init(CAN_TypeDef *can) {
@@ -7,24 +8,32 @@ void can_init(CAN_TypeDef *can) {
     /* enter initialization mode */
     can->MCR |= CAN_MCR_INRQ;
     while (!(CAN1->MSR & CAN_MSR_INAK));
+
+    /* set bit timing */
+
+    /* enable interrupts */
+
+    /* enter normal mode */
+    can->MCR &= ~CAN_MCR_INRQ;
+    while (CAN1->MSR & CAN_MSR_INAK);
 }
 
-void candata_init(candata_t *d) {
-    int i = 0;
-    d->size = 0;
+struct can_frame *can_frame_init() {
+    int i;
+    can_frame_t *f = malloc(sizeof(struct can_frame));
 
-    /* zero out */
+    f->dlc = 0;
     for (i = 0; i < 8; i++) {
-        (d->data)[i] = 0;
+        (f->data)[i] = 0;
     }
+
+    return f;
 }
 
-void candata_add(candata_t *d, uint8_t v) {
-    if (d->size > 7) {
+void can_frame_add(struct can_frame *d, uint8_t v) {
+    if (d->dlc >= 8) {
         return;
     }
 
-    (d->data)[d->size] = v;
-    (d->size)++;
+    (d->data)[(d->dlc)++] = v;
 }
-
