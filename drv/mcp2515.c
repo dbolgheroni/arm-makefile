@@ -214,10 +214,6 @@ int mcp2515_init(uint8_t osc, uint8_t br, uint8_t sp) {
         return -1;
     }
 
-    /* board led debug */
-    gpio_init(GPIOC);
-    gpio_mode(GPIOC, 13, GPIO_OUTPUT);
-
     /* receives any message */
     _mcp2515_bit_modify(RXB0CTRL, RXB0CTRL_RXM1 | RXB0CTRL_RXM0 |
             RXB0CTRL_BUKT, 0xFF);
@@ -241,8 +237,6 @@ void EXTI15_10_IRQHandler(void) {
     extern char rx0, rx1;
 
     NVIC_DisableIRQ(EXTI15_10_IRQn);
-
-    gpio_toggle(GPIOC, 13);
 
     read_status = _mcp2515_read_status();
     _mcp2515_read(CANINTF);
