@@ -376,9 +376,9 @@ typedef struct {
 
 void _mcp2515_reset(void);
 uint8_t _mcp2515_read(uint8_t);
-uint8_t _mcp2515_read_rx_buffer(uint8_t, candata_t *);
+uint8_t _mcp2515_read_rx_buffer(uint8_t, struct can_frame *);
 void _mcp2515_write(uint8_t, uint8_t);
-void _mcp2515_load_tx_buffer(uint8_t, txbconf_t *, candata_t *);
+void _mcp2515_load_tx_buffer(uint8_t, txbconf_t *, struct can_frame *);
 void _mcp2515_rts(uint8_t);
 uint8_t _mcp2515_read_status(void);
 uint8_t _mcp2515_rx_status(void);
@@ -386,4 +386,4 @@ void _mcp2515_bit_modify(uint8_t, uint8_t, uint8_t);
 
 void _enable_pb10_int(void);
 int mcp2515_init(uint8_t, uint8_t, uint8_t);
-void mcp2515_send(uint8_t, const uint32_t, const int, candata_t *);
+void mcp2515_send(uint8_t, const uint32_t, const int, struct can_frame *);

@@ -50,7 +50,7 @@ uint8_t _mcp2515_read(uint8_t reg) {
     return data;
 }
 
-uint8_t _mcp2515_read_rx_buffer(uint8_t buf, candata_t *d) {
+uint8_t _mcp2515_read_rx_buffer(uint8_t buf, struct can_frame *d) {
     uint8_t data;
     int i;
 
@@ -60,9 +60,9 @@ uint8_t _mcp2515_read_rx_buffer(uint8_t buf, candata_t *d) {
     spi_send(SPI1, 0x00); /* ignore sidl */
     spi_send(SPI1, 0x00); /* ignore eid8 */
     spi_send(SPI1, 0x00); /* ignore eid0 */
-    d->size = spi_send(SPI1, 0x00);
+    d->dlc = spi_send(SPI1, 0x00);
 
-    for (i = 0; i < d->size; i++) {
+    for (i = 0; i < d->dlc; i++) {
         d->data[i] = spi_send(SPI1, 0x00);
     }
 
@@ -79,7 +79,7 @@ void _mcp2515_write(uint8_t reg, uint8_t data) {
     gpio_set(GPIOA, 4);
 }
 
-void _mcp2515_load_tx_buffer(uint8_t buf, txbconf_t *c, candata_t *d) {
+void _mcp2515_load_tx_buffer(uint8_t buf, txbconf_t *c, struct can_frame *d) {
     unsigned int i = 0;
 
     gpio_reset(GPIOA, 4);
@@ -89,8 +89,8 @@ void _mcp2515_load_tx_buffer(uint8_t buf, txbconf_t *c, candata_t *d) {
     spi_send(SPI1, c->txbneid8);
     spi_send(SPI1, c->txbneid0);
 
-    spi_send(SPI1, d->size);
-    for (i = 0; i < d->size; i++) {
+    spi_send(SPI1, d->dlc);
+    for (i = 0; i < d->dlc; i++) {
         spi_send(SPI1, (d->data)[i]);
     }
 
@@ -99,8 +99,8 @@ void _mcp2515_load_tx_buffer(uint8_t buf, txbconf_t *c, candata_t *d) {
     _mcp2515_write(TXB0SIDL, c->txbnsidl);
     _mcp2515_write(TXB0EID8, c->txbneid8);
     _mcp2515_write(TXB0EID0, c->txbneid0);
-    _mcp2515_write(TXB0DLC, d->size);
-    for (i = 0; i < d->size; i++) {
+    _mcp2515_write(TXB0DLC, d->dlc);
+    for (i = 0; i < d->dlc; i++) {
         _mcp2515_write(TXBnDm(0, i), (d->data)[i]);
     }
     */
@@ -237,7 +237,7 @@ int mcp2515_init(uint8_t osc, uint8_t br, uint8_t sp) {
 /* irq handler */
 void EXTI15_10_IRQHandler(void) {
     uint8_t read_status;
-    extern candata_t rxb0, rxb1;
+    extern can_frame_t rxb0, rxb1;
     extern char rx0, rx1;
 
     NVIC_DisableIRQ(EXTI15_10_IRQn);
@@ -276,7 +276,8 @@ void EXTI15_10_IRQHandler(void) {
     NVIC_EnableIRQ(EXTI15_10_IRQn);
 }
 
-void mcp2515_send(uint8_t ft, const uint32_t id, const int prio, candata_t *d) {
+void mcp2515_send(uint8_t ft, const uint32_t id, const int prio,
+        struct can_frame *d) {
     uint8_t txbnsidl;
     uint8_t txbn = 0;
     uint8_t read_status;
