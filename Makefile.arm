@@ -59,7 +59,7 @@ elf: $(PROG).elf
 startup-stm32f1.o:
 	$(AS) -mcpu=$(CPU) -g -o $@ $<
 
-.PHONY: upload size disasm cmsistags debugd debug
+.PHONY: upload size disasm tags debugd debug
 debugd:
 	$(OPENOCD) -f $(OPENOCD_SCRIPTS)/interface/$(OPENOCD_INTERFACE)\
 		-f $(OPENOCD_SCRIPTS)/target/$(OPENOCD_TARGET)
@@ -82,8 +82,11 @@ disasm: $(PROG).elf
 	$(OBJDUMP) -h -S -t $(PROG).elf
 
 tags:
-	$(CTAGS) -f cmsistags -R --format=1 --languages=C,C++ \
-		./lib/libopencmsis/include
+	$(CTAGS) -R --format=1 --languages=C,C++\
+		$(.CURDIR)/stm32cubef1/cmsis/include\
+		$(.CURDIR)/drv\
+		$(.CURDIR)/startup*\
+		$(.CURDIR)/system*
 
 clean:
 	rm -rf $(.OBJDIR)/* tags
