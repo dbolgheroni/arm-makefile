@@ -65,7 +65,7 @@ debugd:
 		-f $(OPENOCD_SCRIPTS)/target/$(OPENOCD_TARGET)
 
 debug:
-	$(DB) -x arm-debug.gdb skel.elf
+	$(DB) -x ../arm-debug.gdb $(.OBJDIR)/$(PROG).elf
 
 upload:
 	$(OPENOCD) -f $(OPENOCD_SCRIPTS)/interface/$(OPENOCD_INTERFACE)\
