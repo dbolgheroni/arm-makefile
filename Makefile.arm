@@ -1,6 +1,13 @@
 CPU=cortex-m3
 
+
+OS != uname -s
+.if $(OS) == OpenBSD
 LOCALBASE = /usr/local
+.else
+LOCALBASE = /usr
+.endif
+
 MAKEOBJDIR = obj
 
 # toolchain
