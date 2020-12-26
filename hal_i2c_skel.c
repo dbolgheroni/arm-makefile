@@ -9,6 +9,7 @@ void error_handler(void);
 
 void HAL_I2C_MspInit(I2C_HandleTypeDef *hi2c) {
     GPIO_InitTypeDef pin_init;
+    I2C_InitTypeDef hi2c_init;
 
     __HAL_RCC_GPIOB_CLK_ENABLE();
     __HAL_RCC_I2C1_CLK_ENABLE();
@@ -23,12 +24,20 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef *hi2c) {
     /* configure SDA1 on PB7 */
     pin_init.Pin = GPIO_PIN_7;
     HAL_GPIO_Init(GPIOB, &pin_init);
+
+    /* configure I2C handle */
+    hi2c->Instance = I2C1;
+    hi2c_init.ClockSpeed = 400000;
+    hi2c_init.DutyCycle = I2C_DUTYCYCLE_2;
+    hi2c_init.OwnAddress1 = 0x8;
+    hi2c_init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+    hi2c_init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+
+    hi2c->Init = hi2c_init;
 }
 
 int main() {
     I2C_HandleTypeDef i2c1;
-    I2C_InitTypeDef i2c1_init;
-    //uint8_t txb[] = "a";
     uint8_t dis_seqop[] = { 0x0A, 0x20 };
     uint8_t set_iodira[] = { 0x00, 0x00 };
     uint8_t set_gpioa[] = { 0x12, 0xFF };
@@ -46,17 +55,6 @@ int main() {
     pc13.Pull = GPIO_PULLUP;
     pc13.Speed = GPIO_SPEED_FREQ_LOW;
     HAL_GPIO_Init(GPIOC, &pc13);
-
-    /* configure I2C handle */
-    i2c1.Instance = I2C1;
-
-    i2c1_init.ClockSpeed = 400000;
-    i2c1_init.DutyCycle = I2C_DUTYCYCLE_2;
-    i2c1_init.OwnAddress1 = 0x8;
-    i2c1_init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
-    i2c1_init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
-
-    i2c1.Init = i2c1_init;
 
     if (HAL_I2C_Init(&i2c1) != HAL_OK) {
         error_handler();
