@@ -31,6 +31,9 @@ void HAL_I2C_MspInit(I2C_HandleTypeDef *hi2c) {
     hi2c_init.DutyCycle = I2C_DUTYCYCLE_2;
     hi2c_init.OwnAddress1 = 0x8;
     hi2c_init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
+    hi2c_init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+    hi2c_init.OwnAddress2 = 0xFF;
+    hi2c_init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
     hi2c_init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
 
     hi2c->Init = hi2c_init;
