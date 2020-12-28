@@ -154,4 +154,4 @@ tags:
 		$(.CURDIR)/system*
 
 clean:
-	rm -rf $(.OBJDIR)/* tags
+	rm -rf $(.OBJDIR)/*
