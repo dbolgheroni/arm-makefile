@@ -91,7 +91,7 @@ HAL_DEPS = stm32f1xx_hal \
            stm32f1xx_ll_utils
 
 DRIVERS_INC = -I$(.CURDIR)/drv
-DRIVERS = gpio util usart spi can mcp2515 display
+DRIVERS = gpio timer util usart spi can mcp2515 display
 
 .PATH: $(.CURDIR)/stm32cubef1/hal/src $(.CURDIR)/drv
 
