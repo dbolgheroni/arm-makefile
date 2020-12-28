@@ -31,8 +31,64 @@ STM32_HAL_INC = -I$(.CURDIR)/stm32cubef1/hal/include
 STM32_HAL_SRC_DIR = $(.CURDIR)/stm32cubef1/hal/src
 
 DEPS = startup-stm32f1 system-stm32f1
-HAL_DEPS = stm32f1xx_hal stm32f1xx_hal_cortex
-HAL_DEPS += stm32f1xx_hal_gpio stm32f1xx_hal_spi
+HAL_DEPS = stm32f1xx_hal \
+           stm32f1xx_hal_adc \
+           stm32f1xx_hal_adc_ex \
+           stm32f1xx_hal_can \
+           stm32f1xx_hal_cec \
+           stm32f1xx_hal_cortex \
+           stm32f1xx_hal_crc \
+           stm32f1xx_hal_dac \
+           stm32f1xx_hal_dac_ex \
+           stm32f1xx_hal_dma \
+           stm32f1xx_hal_eth \
+           stm32f1xx_hal_flash \
+           stm32f1xx_hal_flash_ex \
+           stm32f1xx_hal_gpio \
+           stm32f1xx_hal_gpio_ex \
+           stm32f1xx_hal_hcd \
+           stm32f1xx_hal_i2c \
+           stm32f1xx_hal_i2s \
+           stm32f1xx_hal_irda \
+           stm32f1xx_hal_iwdg \
+           stm32f1xx_hal_mmc \
+           stm32f1xx_hal_nand \
+           stm32f1xx_hal_nor \
+           stm32f1xx_hal_pccard \
+           stm32f1xx_hal_pcd \
+           stm32f1xx_hal_pcd_ex \
+           stm32f1xx_hal_pwr \
+           stm32f1xx_hal_rcc \
+           stm32f1xx_hal_rcc_ex \
+           stm32f1xx_hal_rtc \
+           stm32f1xx_hal_rtc_ex \
+           stm32f1xx_hal_sd \
+           stm32f1xx_hal_smartcard \
+           stm32f1xx_hal_spi \
+           stm32f1xx_hal_spi_ex \
+           stm32f1xx_hal_sram \
+           stm32f1xx_hal_tim \
+           stm32f1xx_hal_tim_ex \
+           stm32f1xx_hal_uart \
+           stm32f1xx_hal_usart \
+           stm32f1xx_hal_wwdg \
+           stm32f1xx_ll_adc \
+           stm32f1xx_ll_crc \
+           stm32f1xx_ll_dac \
+           stm32f1xx_ll_dma \
+           stm32f1xx_ll_exti \
+           stm32f1xx_ll_fsmc \
+           stm32f1xx_ll_gpio \
+           stm32f1xx_ll_i2c \
+           stm32f1xx_ll_pwr \
+           stm32f1xx_ll_rcc \
+           stm32f1xx_ll_rtc \
+           stm32f1xx_ll_sdmmc \
+           stm32f1xx_ll_spi \
+           stm32f1xx_ll_tim \
+           stm32f1xx_ll_usart \
+           stm32f1xx_ll_usb \
+           stm32f1xx_ll_utils
 
 DRIVERS_INC = -I$(.CURDIR)/drv
 DRIVERS = gpio util usart spi can mcp2515 display
