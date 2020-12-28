@@ -47,8 +47,10 @@ obj: $(PROG).o $(DEPS:S/$/.o/g) $(HAL_DEPS:S/$/.o/g) $(DRIVERS:S/$/.o/g)
 elf: $(PROG).elf
 
 .SUFFIXES: .c .o .elf
+
+# XXX: generates correct code only with -Os and -Og, not with -O0, -O1, etc.
 .c.o:
-	$(CC) -g -Os -c -mcpu=$(CPU)\
+	$(CC) -g -Og -c -mcpu=$(CPU) \
 		$(STM32_CMSIS_INC)\
 		$(STM32_HAL_INC)\
 		$(DRIVERS_INC)\
