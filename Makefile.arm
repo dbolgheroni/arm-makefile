@@ -154,7 +154,8 @@ disasm: $(PROG).elf
 
 tags:
 	$(CTAGS) -R --format=1 --languages=C,C++\
-		$(.CURDIR)/stm32cubef1/cmsis/include\
+		-o ../tags\
+		$(.CURDIR)/stm32cubef1\
 		$(.CURDIR)/drv\
 		$(.CURDIR)/startup*\
 		$(.CURDIR)/system*
