@@ -91,7 +91,7 @@ HAL_DEPS = stm32f1xx_hal \
            stm32f1xx_ll_utils
 
 DRIVERS_INC = -I$(.CURDIR)/drv
-DRIVERS = gpio timer util usart spi can mcp2515 display
+DRIVERS = itm gpio timer util usart spi can mcp2515 display
 
 .PATH: $(.CURDIR)/stm32cubef1/hal/src $(.CURDIR)/drv
 
@@ -139,6 +139,12 @@ upload:
 		-c "flash write_image erase $(PROG).elf"\
 		-c "reset"\
 		-c "shutdown"
+
+trace:
+	$(OPENOCD) -f $(OPENOCD_SCRIPTS)/interface/$(OPENOCD_INTERFACE)\
+		-f $(OPENOCD_SCRIPTS)/target/$(OPENOCD_TARGET)\
+		-c "tpiu config external uart on 72000000 12000000"\
+		-c "itm ports 0"
 
 size:
 	$(SIZE) $(PROG).elf
