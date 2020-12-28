@@ -1,6 +1,5 @@
 CPU=cortex-m3
 
-
 OS != uname -s
 .if $(OS) == OpenBSD
 LOCALBASE = /usr/local
@@ -89,6 +88,11 @@ HAL_DEPS = stm32f1xx_hal \
            stm32f1xx_ll_usart \
            stm32f1xx_ll_usb \
            stm32f1xx_ll_utils
+
+# XXX: find a way to include these templates
+# stm32f1xx_hal_msp_template
+# stm32f1xx_hal_timebase_rtc_alarm_template
+# stm32f1xx_hal_timebase_tim_template
 
 DRIVERS_INC = -I$(.CURDIR)/drv
 DRIVERS = itm gpio timer util usart spi can mcp2515 display
