@@ -243,6 +243,8 @@ int mcp2515_init(uint8_t osc, uint8_t br, uint8_t sp) {
     /* enter Normal Mode */
     _mcp2515_bit_modify(CANCTRL0,
             CANCTRL_REQOP2 | CANCTRL_REQOP1 | CANCTRL_REQOP0, 0x00);
+
+    return 0;
 }
 
 /* irq handler */
