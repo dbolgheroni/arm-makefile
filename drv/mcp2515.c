@@ -151,25 +151,18 @@ static uint8_t _mcp2515_read_tec(void) {
     return tec;
 }
 
-const struct mcp2515_canconf {
-    uint8_t osc;
-    uint8_t br;
-    uint8_t sp;
-    uint8_t cnf1;
-    uint8_t cnf2;
-    uint8_t cnf3;
-} mcp2515_canconfbits[] = {
-    OSC_8, BR_5, SP_75, 0x27, 0xb6, 0x04,
-    OSC_8, BR_10, SP_75, 0x13, 0xb6, 0x04,
-    OSC_8, BR_50, SP_75, 0x03, 0xb6, 0x04,
-    OSC_8, BR_125, SP_75, 0x01, 0xac, 0x03,
-    OSC_8, BR_250, SP_75, 0x00, 0xac, 0x03,
-    OSC_8, BR_5, SP_875, 0x31, 0xb5, 0x01,
-    OSC_8, BR_10, SP_875, 0x18, 0xb5, 0x01,
-    OSC_8, BR_50, SP_875, 0x04, 0xb5, 0x01,
-    OSC_8, BR_125, SP_875, 0x01, 0xb5, 0x01,
-    OSC_8, BR_250, SP_875, 0xc0, 0xb5, 0x01,
-    0, 0, 0, 0, 0, 0,
+mcp2515_canconf_t mcp2515_confs[] = {
+    { OSC_8, BR_5, SP_75, 0x27, 0xb6, 0x04 },
+    { OSC_8, BR_10, SP_75, 0x13, 0xb6, 0x04 },
+    { OSC_8, BR_50, SP_75, 0x03, 0xb6, 0x04 },
+    { OSC_8, BR_125, SP_75, 0x01, 0xac, 0x03 },
+    { OSC_8, BR_250, SP_75, 0x00, 0xac, 0x03 },
+    { OSC_8, BR_5, SP_875, 0x31, 0xb5, 0x01 },
+    { OSC_8, BR_10, SP_875, 0x18, 0xb5, 0x01 },
+    { OSC_8, BR_50, SP_875, 0x04, 0xb5, 0x01 },
+    { OSC_8, BR_125, SP_875, 0x01, 0xb5, 0x01 },
+    { OSC_8, BR_250, SP_875, 0xc0, 0xb5, 0x01 },
+    { 0, 0, 0, 0, 0, 0 },
 };
 
 void _enable_pb10_int(void) {
@@ -198,7 +191,7 @@ void _enable_pb10_int(void) {
 }
 
 int mcp2515_init(uint8_t osc, uint8_t br, uint8_t sp) {
-    const struct mcp2515_canconf *c;
+    const mcp2515_canconf_t *c;
     char canset = 0;
 
     spi_master_init(SPI1, SPI_MODE0, SPI_BR32, SPI_MSB);
@@ -207,7 +200,7 @@ int mcp2515_init(uint8_t osc, uint8_t br, uint8_t sp) {
     /* enter Configuration Mode */
     _mcp2515_reset();
 
-    for (c = mcp2515_canconfbits; c->osc; c++) {
+    for (c = mcp2515_confs; c->osc; c++) {
         if (osc == c->osc && br == c->br && sp == c->sp) {
             _mcp2515_write(CNF1, c->cnf1);
             _mcp2515_write(CNF2, c->cnf2);

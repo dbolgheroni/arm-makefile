@@ -379,6 +379,15 @@ typedef struct {
     uint8_t txbneid0;
 } txbconf_t;
 
+typedef struct mcp2515_canconf {
+    uint8_t osc;
+    uint8_t br;
+    uint8_t sp;
+    uint8_t cnf1;
+    uint8_t cnf2;
+    uint8_t cnf3;
+} mcp2515_canconf_t;
+
 int mcp2515_init(uint8_t, uint8_t, uint8_t);
 void mcp2515_send(uint8_t, const uint32_t, const int, struct can_frame *);
 void __attribute__((weak)) mcp2515_int_rx(struct can_frame *);
