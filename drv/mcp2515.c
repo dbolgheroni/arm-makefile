@@ -202,7 +202,7 @@ void _enable_pb10_int(void) {
 
 int mcp2515_init(uint8_t osc, uint8_t br, uint8_t sp) {
     const struct mcp2515_canconf *c;
-    char i, canset = 0;
+    char canset = 0;
 
     spi_master_init(SPI1, SPI_MODE0, SPI_BR32, SPI_MSB);
     gpio_set(GPIOA, 4);
