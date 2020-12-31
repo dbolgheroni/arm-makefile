@@ -330,19 +330,24 @@
 #define RXB1CTRL_RXM0           (1 << 5)
 #define RXB1CTRL_RXM1           (1 << 6)
 
-/* argument to mcp2515 putc */
-#define STDF       0x1
-#define EXTF       0x2
-
 /* masks for handling standard and extended frames */
-#define TXBnSIDL_STD       0x00000007
-#define TXBnSIDH_STD       0x000007F8
-#define TXBnEID0_EXT       0x000000FF
-#define TXBnEID8_EXT       0x0000FF00
-#define TXBnSIDL10_EXT     0x00030000
-#define TXBnSIDL75_EXT     0x001C0000
-#define TXBnSIDH_EXT       0x1FE00000
-#define TXBnSIDL_EXIDE     0x08
+#define TXBnSIDL_STD            0x00000007
+#define TXBnSIDH_STD            0x000007F8
+#define TXBnEID0_EXT            0x000000FF
+#define TXBnEID8_EXT            0x0000FF00
+#define TXBnSIDL10_EXT          0x00030000
+#define TXBnSIDL75_EXT          0x001C0000
+#define TXBnSIDH_EXT            0x1FE00000
+#define TXBnSIDL_EXIDE          0x08
+
+#define SIDL_STD                0x00000007
+#define SIDH_STD                0x000007F8
+#define EID0_EXT                0x000000FF
+#define EID8_EXT                0x0000FF00
+#define SIDL10_EXT              0x00030000
+#define SIDL75_EXT              0x001C0000
+#define SIDH_EXT                0x1FE00000
+#define SIDL_EXIDE              0x08
 
 /* message priority */
 #define HIGHEST                 0x3
@@ -355,16 +360,16 @@
 #define OSC_16  0x2
 
 /* baud rate (Kbps) */
-#define BR_5    0x1
-#define BR_10   0x2
-#define BR_50   0x3
-#define BR_125  0x4
-#define BR_250  0x5
+//#define BR_5    0x1
+//#define BR_10   0x2
+//#define BR_50   0x3
+//#define BR_125  0x4
+//#define BR_250  0x5
 
 /* sample points (%) */
-#define SP_75   0x1    /* ARINC 825 */
-#define SP_875  0x2    /* DeviceNet, CANopen */
-#define SP_XX   0x3
+//#define SP_75   0x1    /* ARINC 825 */
+//#define SP_875  0x2    /* DeviceNet, CANopen */
+//#define SP_XX   0x3
 
 /* conf */
 typedef struct {
@@ -374,16 +379,6 @@ typedef struct {
     uint8_t txbneid0;
 } txbconf_t;
 
-void _mcp2515_reset(void);
-uint8_t _mcp2515_read(uint8_t);
-uint8_t _mcp2515_read_rx_buffer(uint8_t, struct can_frame *);
-void _mcp2515_write(uint8_t, uint8_t);
-void _mcp2515_load_tx_buffer(uint8_t, txbconf_t *, struct can_frame *);
-void _mcp2515_rts(uint8_t);
-uint8_t _mcp2515_read_status(void);
-uint8_t _mcp2515_rx_status(void);
-void _mcp2515_bit_modify(uint8_t, uint8_t, uint8_t);
-
-void _enable_pb10_int(void);
 int mcp2515_init(uint8_t, uint8_t, uint8_t);
 void mcp2515_send(uint8_t, const uint32_t, const int, struct can_frame *);
+void __attribute__((weak)) mcp2515_int_rx(struct can_frame *);

@@ -23,6 +23,8 @@
  */
 
 #include <stm32f103xb.h>
+#include <stdlib.h>
+
 #include <spi.h>
 #include <gpio.h>
 #include <spi.h>
@@ -31,14 +33,14 @@
 
 #include <mcp2515.h>
 
-void _mcp2515_reset(void) {
+static void _mcp2515_reset(void) {
     gpio_reset(GPIOA, 4);
     spi_send(SPI1, MCP2515_RESET_INSTR);
     gpio_set(GPIOA, 4);
-    wait_cycles(1000);
+    wait_cycles(10000);
 }
 
-uint8_t _mcp2515_read(uint8_t reg) {
+static uint8_t _mcp2515_read(uint8_t reg) {
     uint8_t data;
 
     gpio_reset(GPIOA, 4);
@@ -50,7 +52,7 @@ uint8_t _mcp2515_read(uint8_t reg) {
     return data;
 }
 
-uint8_t _mcp2515_read_rx_buffer(uint8_t buf, struct can_frame *d) {
+static uint8_t _mcp2515_read_rx_buffer(uint8_t buf, struct can_frame *d) {
     uint8_t data;
     int i;
 
@@ -71,7 +73,7 @@ uint8_t _mcp2515_read_rx_buffer(uint8_t buf, struct can_frame *d) {
     return data;
 }
 
-void _mcp2515_write(uint8_t reg, uint8_t data) {
+static void _mcp2515_write(uint8_t reg, uint8_t data) {
     gpio_reset(GPIOA, 4);
     spi_send(SPI1, MCP2515_WRITE_INSTR);
     spi_send(SPI1, reg);
@@ -79,7 +81,7 @@ void _mcp2515_write(uint8_t reg, uint8_t data) {
     gpio_set(GPIOA, 4);
 }
 
-void _mcp2515_load_tx_buffer(uint8_t buf, txbconf_t *c, struct can_frame *d) {
+static void _mcp2515_load_tx_buffer(uint8_t buf, txbconf_t *c, struct can_frame *d) {
     unsigned int i = 0;
 
     gpio_reset(GPIOA, 4);
@@ -108,13 +110,13 @@ void _mcp2515_load_tx_buffer(uint8_t buf, txbconf_t *c, struct can_frame *d) {
     gpio_set(GPIOA, 4);
 }
 
-void _mcp2515_rts(uint8_t buf) {
+static void _mcp2515_rts(uint8_t buf) {
     gpio_reset(GPIOA, 4);
     spi_send(SPI1, MCP2515_RTS_INSTR | buf);
     gpio_set(GPIOA, 4);
 }
 
-uint8_t _mcp2515_read_status(void) {
+static uint8_t _mcp2515_read_status(void) {
     uint8_t status;
 
     gpio_reset(GPIOA, 4);
@@ -125,7 +127,7 @@ uint8_t _mcp2515_read_status(void) {
     return status;
 }
 
-uint8_t _mcp2515_rx_status(void) {
+static uint8_t _mcp2515_rx_status(void) {
     uint8_t status;
 
     gpio_reset(GPIOA, 4);
@@ -136,7 +138,7 @@ uint8_t _mcp2515_rx_status(void) {
     return status;
 }
 
-void _mcp2515_bit_modify(uint8_t reg, uint8_t mask, uint8_t data) {
+static void _mcp2515_bit_modify(uint8_t reg, uint8_t mask, uint8_t data) {
     gpio_reset(GPIOA, 4);
     spi_send(SPI1, MCP2515_BITMODIFY_INSTR);
     spi_send(SPI1, reg);
@@ -145,14 +147,21 @@ void _mcp2515_bit_modify(uint8_t reg, uint8_t mask, uint8_t data) {
     gpio_set(GPIOA, 4);
 }
 
-const struct canconf {
+static uint8_t _mcp2515_read_tec(void) {
+    uint8_t tec = 0;
+    tec = _mcp2515_read(TEC);
+
+    return tec;
+}
+
+const struct mcp2515_canconf {
     uint8_t osc;
     uint8_t br;
     uint8_t sp;
     uint8_t cnf1;
     uint8_t cnf2;
     uint8_t cnf3;
-} canconfbits[] = {
+} mcp2515_canconfbits[] = {
     OSC_8, BR_5, SP_75, 0x27, 0xb6, 0x04,
     OSC_8, BR_10, SP_75, 0x13, 0xb6, 0x04,
     OSC_8, BR_50, SP_75, 0x03, 0xb6, 0x04,
@@ -169,7 +178,6 @@ const struct canconf {
 void _enable_pb10_int(void) {
     /* enable external interrupt line */
     RCC->APB2ENR |= RCC_APB2ENR_AFIOEN;
-    NVIC_EnableIRQ(EXTI15_10_IRQn);
     EXTI->IMR |= EXTI_IMR_MR10;
     EXTI->FTSR |= EXTI_FTSR_TR10;
 
@@ -181,10 +189,19 @@ void _enable_pb10_int(void) {
     GPIOB->ODR |= GPIO_ODR_ODR10;
 
     AFIO->EXTICR[2] |= AFIO_EXTICR3_EXTI10_PB;
+
+    __disable_irq();
+    NVIC_SetPriorityGrouping(0U);
+
+    NVIC_SetPriority(EXTI15_10_IRQn, 5U);
+    NVIC_SetPriority(SysTick_IRQn, 6U);
+    NVIC_EnableIRQ(EXTI15_10_IRQn);
+    __enable_irq();
+
 }
 
 int mcp2515_init(uint8_t osc, uint8_t br, uint8_t sp) {
-    const struct canconf *c;
+    const struct mcp2515_canconf *c;
     char i, canset = 0;
 
     spi_master_init(SPI1, SPI_MODE0, SPI_BR32, SPI_MSB);
@@ -193,7 +210,7 @@ int mcp2515_init(uint8_t osc, uint8_t br, uint8_t sp) {
     /* enter Configuration Mode */
     _mcp2515_reset();
 
-    for (c = canconfbits; c->osc; c++) {
+    for (c = mcp2515_canconfbits; c->osc; c++) {
         if (osc == c->osc && br == c->br && sp == c->sp) {
             _mcp2515_write(CNF1, c->cnf1);
             _mcp2515_write(CNF2, c->cnf2);
@@ -223,6 +240,7 @@ int mcp2515_init(uint8_t osc, uint8_t br, uint8_t sp) {
 
     /* enable MCP2515 interrupts */
     _mcp2515_bit_modify(CANINTE, CANINTE_RX0IE | CANINTE_RX1IE |
+            //CANINTE_ERRIE | CANINTE_MERRE |
             CANINTE_TX0IE | CANINTE_TX1IE | CANINTE_TX2IE, 0xFF);
 
     /* enter Normal Mode */
@@ -233,15 +251,15 @@ int mcp2515_init(uint8_t osc, uint8_t br, uint8_t sp) {
 /* irq handler */
 void EXTI15_10_IRQHandler(void) {
     uint8_t read_status;
-    extern can_frame_t rxb0, rxb1;
-    extern char rx0, rx1;
 
-    NVIC_DisableIRQ(EXTI15_10_IRQn);
+    //1//NVIC_ClearPendingIRQ(EXTI15_10_IRQn); __DSB(); __ISB();
+    //1//__disable_irq(); __DSB(); __ISB();
+
+    //2//__set_BASEPRI(5 << (8U - __NVIC_PRIO_BITS));
+
+    __disable_irq();
 
     read_status = _mcp2515_read_status();
-    _mcp2515_read(CANINTF);
-    _mcp2515_read(CANSTAT2);
-    _mcp2515_read(EFLG);
 
     /* sent frame */
     if (read_status & MCP2515_READSTATUS_TX0IF) {
@@ -256,18 +274,35 @@ void EXTI15_10_IRQHandler(void) {
 
     /* received frame */
     if (read_status & MCP2515_READSTATUS_RX0IF) {
+        can_frame_t *rxb0 = can_frame_init();
+
         _mcp2515_bit_modify(CANINTF, CANINTF_RX0IF, 0x00);
-        _mcp2515_read_rx_buffer(MCP2515_READRXB_RXB0SIDH, &rxb0);
-        rx0 = 1;
+        _mcp2515_read_rx_buffer(MCP2515_READRXB_RXB0SIDH, rxb0);
+
+        mcp2515_int_rx(rxb0);
+        free(rxb0);
     }
     if (read_status & MCP2515_READSTATUS_RX1IF) {
+        can_frame_t *rxb1 = can_frame_init();
+
         _mcp2515_bit_modify(CANINTF, CANINTF_RX1IF, 0x00);
-        _mcp2515_read_rx_buffer(MCP2515_READRXB_RXB1SIDH, &rxb1);
-        rx1 = 1;
+        _mcp2515_read_rx_buffer(MCP2515_READRXB_RXB1SIDH, rxb1);
+
+        mcp2515_int_rx(rxb1);
+        free(rxb1);
     }
 
+    /* clear pending register */
     EXTI->PR |= EXTI_PR_PR10;
-    NVIC_EnableIRQ(EXTI15_10_IRQn);
+
+    //1//NVIC_EnableIRQ(EXTI15_10_IRQn);
+    //1//__enable_irq(); __DSB(); __ISB();
+
+    //2//__set_BASEPRI(0U);
+
+    __enable_irq();
+
+    return;
 }
 
 void mcp2515_send(uint8_t ft, const uint32_t id, const int prio,
@@ -277,7 +312,12 @@ void mcp2515_send(uint8_t ft, const uint32_t id, const int prio,
     uint8_t read_status;
     txbconf_t c;
 
-    NVIC_DisableIRQ(EXTI15_10_IRQn);
+    //1//NVIC_ClearPendingIRQ(EXTI15_10_IRQn); __DSB(); __ISB();
+    //1//__disable_irq(); __DSB(); __ISB();
+
+    //2//__set_BASEPRI(5 << (8U - __NVIC_PRIO_BITS));
+
+    __disable_irq();
 
     read_status = _mcp2515_read_status();
 
@@ -307,10 +347,6 @@ void mcp2515_send(uint8_t ft, const uint32_t id, const int prio,
 
         /* request to send TXBn */
         _mcp2515_rts(MCP2515_RTS_TXBn(txbn));
-
-        /* clear TXBn flag */
-        _mcp2515_bit_modify(CANINTF, CANINTF_TXnIF(txbn), 0x00);
-
     } else if (ft == EXTF) {
         txbnsidl = (uint8_t) ((id & TXBnSIDL10_EXT) >> 16);
         txbnsidl = (uint8_t) (txbnsidl | ((id & TXBnSIDL75_EXT) >> 13));
@@ -328,10 +364,12 @@ void mcp2515_send(uint8_t ft, const uint32_t id, const int prio,
 
         /* request to send TXBn */
         _mcp2515_rts(MCP2515_RTS_TXBn(txbn));
-
-        /* clear TXBn flag */
-        _mcp2515_bit_modify(CANINTF, CANINTF_TXnIF(txbn), 0x00);
     }
 
-    NVIC_EnableIRQ(EXTI15_10_IRQn);
+    //1//NVIC_EnableIRQ(EXTI15_10_IRQn);
+    //1//__enable_irq(); __DSB(); __ISB();
+
+    //2//__set_BASEPRI(0U);
+
+    __enable_irq();
 }
