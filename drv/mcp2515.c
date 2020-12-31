@@ -52,8 +52,7 @@ static uint8_t _mcp2515_read(uint8_t reg) {
     return data;
 }
 
-static uint8_t _mcp2515_read_rx_buffer(uint8_t buf, struct can_frame *d) {
-    uint8_t data;
+static void _mcp2515_read_rx_buffer(uint8_t buf, struct can_frame *d) {
     int i;
 
     gpio_reset(GPIOA, 4);
@@ -69,8 +68,6 @@ static uint8_t _mcp2515_read_rx_buffer(uint8_t buf, struct can_frame *d) {
     }
 
     gpio_set(GPIOA, 4);
-
-    return data;
 }
 
 static void _mcp2515_write(uint8_t reg, uint8_t data) {
