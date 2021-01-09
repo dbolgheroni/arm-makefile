@@ -148,7 +148,7 @@ void SystemInit (void)
   while (!(RCC->CR & RCC_CR_PLLRDY));
 
   /* pll as sysclk */
-  RCC->CFGR |= RCC_CFGR_SW_1;
+  RCC->CFGR |= RCC_CFGR_SW_PLL;
 
   /* set 2 wait states for 24 MHz < sysclk <= 72 MHz */
   FLASH->ACR |= FLASH_ACR_LATENCY_1;
