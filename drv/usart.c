@@ -65,8 +65,6 @@ void usart_puts(USART_TypeDef *usart, uint8_t *s) {
 
 /* irq handler */
 void USART1_IRQHandler(void) {
-    uint8_t r;
     gpio_toggle(GPIOC, 13);
-    r = USART1->DR;
     USART1->SR &= ~USART_SR_RXNE;
 }
