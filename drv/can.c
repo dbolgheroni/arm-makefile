@@ -2,21 +2,21 @@
 #include <stdlib.h>
 #include <can.h>
 
-void can_init(CAN_TypeDef *can) {
-    RCC->APB2ENR |= RCC_APB1ENR_CAN1EN;
-
-    /* enter initialization mode */
-    can->MCR |= CAN_MCR_INRQ;
-    while (!(CAN1->MSR & CAN_MSR_INAK));
-
-    /* set bit timing */
-
-    /* enable interrupts */
-
-    /* enter normal mode */
-    can->MCR &= ~CAN_MCR_INRQ;
-    while (CAN1->MSR & CAN_MSR_INAK);
-}
+const struct canconf {
+    uint8_t br;
+    uint8_t sp;
+    uint32_t can_btr;
+} canconfbits[] = {
+    BR_10, SP_75, 0x003a00e0,
+    BR_50, SP_75, 0x003a002c,
+    BR_125, SP_75, 0x003a0011,
+    BR_250, SP_75, 0x003a0008,
+    BR_10, SP_875, 0x001c00e0,
+    BR_50, SP_875, 0x001c002c,
+    BR_125, SP_875, 0x001c0011,
+    BR_250, SP_875, 0x001c0008,
+    0, 0, 0,
+};
 
 struct can_frame *can_frame_init() {
     int i;
