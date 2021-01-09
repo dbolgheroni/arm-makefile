@@ -111,18 +111,18 @@ elf: $(PROG).elf
 # XXX: generates correct code only with -Os and -Og, not with -O0, -O1, etc.
 .c.o:
 	$(CC) -g -Og -c -mcpu=$(CPU) \
-		$(STM32_CMSIS_INC)\
-		$(STM32_HAL_INC)\
-		$(DRIVERS_INC)\
-		-DSTM32F103xB\
+		$(STM32_CMSIS_INC) \
+		$(STM32_HAL_INC) \
+		$(DRIVERS_INC) \
+		-DSTM32F103xB \
 		-o $(@:T) $<
 
 .o.elf:
-	$(CC) $(.OBJDIR)/*.o\
-		-g -static -mcpu=$(CPU)\
-		-Wl,-Map,$(<:R).map,--gc-sections,--cref\
-		-Wl,--start-group -lc -lgcc -lnosys -Wl,--end-group\
-		-T $(.CURDIR)/ld/stm32f103c8tx_flash.ld\
+	$(CC) $(.OBJDIR)/*.o \
+		-g -static -mcpu=$(CPU) \
+		-Wl,-Map,$(<:R).map,--gc-sections,--cref \
+		-Wl,--start-group -lc -lgcc -lnosys -Wl,--end-group \
+		-T $(.CURDIR)/ld/stm32f103c8tx_flash.ld \
 		-o $@
 
 startup-stm32f1.o:
@@ -130,24 +130,24 @@ startup-stm32f1.o:
 
 .PHONY: upload size disasm tags debugd debug
 debugd:
-	$(OPENOCD) -f $(OPENOCD_SCRIPTS)/interface/$(OPENOCD_INTERFACE)\
+	$(OPENOCD) -f $(OPENOCD_SCRIPTS)/interface/$(OPENOCD_INTERFACE) \
 		-f $(OPENOCD_SCRIPTS)/target/$(OPENOCD_TARGET)
 
 debug:
 	$(DB) -x ../arm-debug.gdb $(.OBJDIR)/$(PROG).elf
 
 upload:
-	$(OPENOCD) -f $(OPENOCD_SCRIPTS)/interface/$(OPENOCD_INTERFACE)\
-		-f $(OPENOCD_SCRIPTS)/target/$(OPENOCD_TARGET)\
-		-c "init" -c "reset init"\
-		-c "flash write_image erase $(PROG).elf"\
-		-c "reset"\
+	$(OPENOCD) -f $(OPENOCD_SCRIPTS)/interface/$(OPENOCD_INTERFACE) \
+		-f $(OPENOCD_SCRIPTS)/target/$(OPENOCD_TARGET) \
+		-c "init" -c "reset init" \
+		-c "flash write_image erase $(PROG).elf" \
+		-c "reset" \
 		-c "shutdown"
 
 trace:
-	$(OPENOCD) -f $(OPENOCD_SCRIPTS)/interface/$(OPENOCD_INTERFACE)\
-		-f $(OPENOCD_SCRIPTS)/target/$(OPENOCD_TARGET)\
-		-c "tpiu config external uart on 72000000 12000000"\
+	$(OPENOCD) -f $(OPENOCD_SCRIPTS)/interface/$(OPENOCD_INTERFACE) \
+		-f $(OPENOCD_SCRIPTS)/target/$(OPENOCD_TARGET) \
+		-c "tpiu config external uart on 72000000 12000000" \
 		-c "itm ports 0"
 
 size:
@@ -157,11 +157,11 @@ disasm: $(PROG).elf
 	$(OBJDUMP) -h -S -t $(PROG).elf
 
 tags:
-	$(CTAGS) -R --format=1 --languages=C,C++\
-		-o ../tags\
-		$(.CURDIR)/stm32cubef1\
-		$(.CURDIR)/drv\
-		$(.CURDIR)/startup*\
+	$(CTAGS) -R --format=1 --languages=C,C++ \
+		-o ../tags \
+		$(.CURDIR)/stm32cubef1 \
+		$(.CURDIR)/drv \
+		$(.CURDIR)/startup* \
 		$(.CURDIR)/system*
 
 clean:
