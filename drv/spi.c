@@ -74,28 +74,30 @@ void spi_master_init(SPI_TypeDef *spi,
         uint8_t mode, uint8_t clkdiv, uint8_t bitorder) {
 
     if (spi == SPI1) {
-        /* 
-         * MOSI=PA7 (afpp)
-         * MISO=PA6 (if/ipu)
-         * SCK=PA5 (afpp)
-         * NSS=PA4 (if/ipu/ipd)
-         */ 
+        /* The pins used for SPI should be configured as this, as of Reference
+         * manual RM0008 Rev 20 p. 167:
+         * MOSI=PA7 full duplex / master -> alternate function push-pull
+         * MISO=PA6 full duplex / master -> input floating / input pull-up
+         * SCK=PA5 master -> alternate function push-pull
+         * NSS=PA4 software -> not used, can be used as a GPIO */
 
         /* enable clock for periphericals */
         RCC->APB2ENR |= RCC_APB2ENR_SPI1EN | RCC_APB2ENR_IOPAEN;
 
         /* configure AF GPIO pins, CNF does not zero out on reset  */
-        GPIOA->CRL |= GPIO_CRL_MODE7_1 | GPIO_CRL_CNF7_1;
+        GPIOA->CRL |= GPIO_CRL_MODE7_1 | GPIO_CRL_MODE7_0;
+        GPIOA->CRL |= GPIO_CRL_CNF7_1;
         GPIOA->CRL &= ~GPIO_CRL_CNF7_0;
 
         GPIOA->CRL |= GPIO_CRL_CNF6_1;
         GPIOA->CRL &= ~GPIO_CRL_CNF6_0;
 
-        GPIOA->CRL |= GPIO_CRL_MODE5_1 | GPIO_CRL_CNF5_1;
+        GPIOA->CRL |= GPIO_CRL_MODE5_1 | GPIO_CRL_MODE5_0;
+        GPIOA->CRL |= GPIO_CRL_CNF5_1;
         GPIOA->CRL &= ~GPIO_CRL_CNF5_0;
 
         /* configure NSS GPIO as output 2 MHz (software NSS) */
-        GPIOA->CRL |= GPIO_CRL_MODE4_1;
+        GPIOA->CRL |= GPIO_CRL_MODE4_1 | GPIO_CRL_MODE4_0;
         GPIOA->CRL &= ~(GPIO_CRL_CNF4_1 | GPIO_CRL_CNF4_0);
 
         /* 8-bit data format */
@@ -132,4 +134,3 @@ uint8_t spi_send(SPI_TypeDef *spi, uint8_t c) {
 
     return c;
 }
-
