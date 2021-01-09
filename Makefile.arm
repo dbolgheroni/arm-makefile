@@ -112,6 +112,7 @@ elf: $(PROG).elf
 .c.o:
 	$(CC) -g -Og -c -mcpu=$(CPU) \
 		-Wall \
+		-Wno-unused-function \
 		$(STM32_CMSIS_INC) \
 		$(STM32_HAL_INC) \
 		$(DRIVERS_INC) \
