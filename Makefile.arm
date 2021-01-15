@@ -99,14 +99,13 @@ DRIVERS = itm gpio timer util usart spi can mcp2515 display
 
 .PATH: $(.CURDIR)/stm32cubef1/hal/src $(.CURDIR)/drv
 
+.SUFFIXES: .c .o
+
 all: build size
 
-build: obj elf
+build: obj $(PROG).elf
 
 obj: $(PROG).o $(DEPS:S/$/.o/g) $(HAL_DEPS:S/$/.o/g) $(DRIVERS:S/$/.o/g)
-elf: $(PROG).elf
-
-.SUFFIXES: .c .o .elf
 
 # XXX: generates correct code only with -Os and -Og, not with -O0, -O1, etc.
 .c.o:
@@ -119,11 +118,11 @@ elf: $(PROG).elf
 		-DSTM32F103xB \
 		-o $(@:T) $<
 
-.o.elf:
+$(PROG).elf: obj
 	$(CC) $(.OBJDIR)/*.o \
 		-Wall \
 		-g -static -mcpu=$(CPU) \
-		-Wl,-Map,$(<:R).map,--gc-sections,--cref \
+		-Wl,-Map,$(@:R).map,--gc-sections,--cref \
 		-Wl,--start-group -lc -lgcc -lnosys -Wl,--end-group \
 		-T $(.CURDIR)/ld/stm32f103c8tx_flash.ld \
 		-o $@
