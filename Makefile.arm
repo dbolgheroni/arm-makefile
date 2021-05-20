@@ -94,10 +94,17 @@ HAL_DEPS = stm32f1xx_hal \
 # stm32f1xx_hal_timebase_rtc_alarm_template
 # stm32f1xx_hal_timebase_tim_template
 
+FREERTOS_INC =	-I$(.CURDIR)/freertos/include \
+				-I$(.CURDIR)/freertos/portable/GCC/ARM_CM3
+FREERTOS =		port heap_2 list queue tasks
+
 DRIVERS_INC = -I$(.CURDIR)/drv
 DRIVERS = itm gpio timer util usart spi can mcp2515 display
 
-.PATH: $(.CURDIR)/stm32cubef1/hal/src $(.CURDIR)/drv
+.PATH:	$(.CURDIR)/stm32cubef1/hal/src $(.CURDIR)/drv \
+		$(.CURDIR)/freertos \
+		$(.CURDIR)/freertos/portable/GCC/ARM_CM3 \
+		$(.CURDIR)/freertos/portable/MemMang
 
 .SUFFIXES: .c .o
 
@@ -105,16 +112,17 @@ all: build size
 
 build: obj $(PROG).elf
 
-obj: $(PROG).o $(DEPS:S/$/.o/g) $(HAL_DEPS:S/$/.o/g) $(DRIVERS:S/$/.o/g)
+obj:	$(PROG).o $(DEPS:S/$/.o/g) $(HAL_DEPS:S/$/.o/g) $(DRIVERS:S/$/.o/g) \
+		$(FREERTOS:S/$/.o/g)
 
 # XXX: generates correct code only with -Os and -Og, not with -O0, -O1, etc.
 .c.o:
 	$(CC) -g -Og -c -mcpu=$(CPU) \
-		-Wall \
-		-Wno-unused-function \
+		-Wall -Wno-unused-function \
 		$(STM32_CMSIS_INC) \
 		$(STM32_HAL_INC) \
 		$(DRIVERS_INC) \
+		$(FREERTOS_INC) \
 		-DSTM32F103xB \
 		-o $(@:T) $<
 
