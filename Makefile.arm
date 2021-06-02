@@ -1,4 +1,5 @@
-CPU=cortex-m3
+CPU = cortex-m3
+MCU = STM32F103xB
 
 OS != uname -s
 .if $(OS) == OpenBSD
@@ -6,8 +7,6 @@ LOCALBASE = /usr/local
 .else
 LOCALBASE = /usr
 .endif
-
-MAKEOBJDIR = obj
 
 # toolchain
 CC = $(LOCALBASE)/bin/arm-none-eabi-gcc
@@ -94,6 +93,7 @@ HAL_DEPS = stm32f1xx_hal \
 # stm32f1xx_hal_timebase_rtc_alarm_template
 # stm32f1xx_hal_timebase_tim_template
 
+# FreeRTOS
 FREERTOS_INC =	-I$(.CURDIR)/freertos/include \
 				-I$(.CURDIR)/freertos/portable/GCC/ARM_CM3
 FREERTOS =		port heap_2 list queue tasks
@@ -106,7 +106,7 @@ DRIVERS = itm gpio timer util usart spi can mcp2515 display
 		$(.CURDIR)/freertos/portable/GCC/ARM_CM3 \
 		$(.CURDIR)/freertos/portable/MemMang
 
-.SUFFIXES: .c .o
+.SUFFIXES: .s .c .o
 
 all: build size
 
@@ -115,16 +115,23 @@ build: obj $(PROG).elf
 obj:	$(PROG).o $(DEPS:S/$/.o/g) $(HAL_DEPS:S/$/.o/g) $(DRIVERS:S/$/.o/g) \
 		$(FREERTOS:S/$/.o/g)
 
+CFLAGS = -g -gdwarf-2 \
+		-Og -c -mcpu=$(CPU) -mthumb \
+		-Wall -Wno-unused-function \
+		-D$(MCU)
+ASFLAGS = -c -mcpu=$(CPU) -mthumb
+
 # XXX: generates correct code only with -Os and -Og, not with -O0, -O1, etc.
 .c.o:
-	$(CC) -g -Og -c -mcpu=$(CPU) \
-		-Wall -Wno-unused-function \
+	$(CC) $(CFLAGS) \
 		$(STM32_CMSIS_INC) \
 		$(STM32_HAL_INC) \
 		$(DRIVERS_INC) \
 		$(FREERTOS_INC) \
-		-DSTM32F103xB \
-		-o $(@:T) $<
+		$<
+
+.s.o:
+	$(CC) -x assembler-with-cpp $(ASFLAGS) $<
 
 $(PROG).elf: obj
 	$(CC) $(.OBJDIR)/*.o \
