@@ -145,7 +145,7 @@ $(PROG).elf: obj
 startup-stm32f1.o:
 	$(AS) -mcpu=$(CPU) -g -o $@ $<
 
-.PHONY: upload size disasm tags debugd debug
+.PHONY: download size disasm tags debugd debug
 debugd:
 	$(OPENOCD) -f $(OPENOCD_SCRIPTS)/interface/$(OPENOCD_INTERFACE) \
 		-f $(OPENOCD_SCRIPTS)/target/$(OPENOCD_TARGET)
@@ -153,9 +153,9 @@ debugd:
 debug:
 	$(DB) -x ../arm-debug.gdb $(.OBJDIR)/$(PROG).elf
 
-upload:
+download:
 	$(OPENOCD) -f $(OPENOCD_SCRIPTS)/interface/$(OPENOCD_INTERFACE) \
-		-f $(OPENOCD_SCRIPTS)/target/$(OPENOCD_TARGET) \
+		-f $(OPENOCD_SCRIPTS)/board/$(OPENOCD_TARGET) \
 		-c "init" -c "reset init" \
 		-c "flash write_image erase $(PROG).elf" \
 		-c "reset" \

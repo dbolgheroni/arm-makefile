@@ -1,6 +1,6 @@
 PROG = skel
-OPENOCD_INTERFACE = stlink-v2.cfg
-OPENOCD_TARGET = stm32f1x.cfg
+OPENOCD_INTERFACE = stlink.cfg
+OPENOCD_TARGET = stm32f103c8_blue_pill.cfg
 PORT = /dev/ttyU0
 
 .include "Makefile.arm"
