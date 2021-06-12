@@ -20,100 +20,134 @@ OPENOCD = $(LOCALBASE)/bin/openocd
 OPENOCD_SCRIPTS = $(LOCALBASE)/share/openocd/scripts
 CTAGS = $(LOCALBASE)/bin/uctags
 
-# CMSIS
-STM32_CMSIS_INC = -I$(.CURDIR)/stm32cubef1/cmsis/include/stm32
-STM32_CMSIS_INC += -I$(.CURDIR)/stm32cubef1/cmsis/include/cm3
 
-# HAL
-STM32_HAL_INC = -I$(.CURDIR)/stm32cubef1/hal/include
-STM32_HAL_SRC_DIR = $(.CURDIR)/stm32cubef1/hal/src
+# core
+CORE_INC =	-I$(.CURDIR)/bsp/stm32f1/cmsis/include/cm
+CORE_INC +=	-I$(.CURDIR)/bsp/stm32f1/cmsis/include/stm32
+CORE_INC +=	-I$(.CURDIR)/bsp/stm32f1/core/include
+CORE_INC +=	-I$(.CURDIR)/dev/usb
+CORE =		startup_stm32f103xb.o \
+			system_stm32f1xx.o \
+			stm32f1xx_hal_msp.o \
+			stm32f1xx_it.o \
+			stm32f1xx_hal_timebase_tim.o \
+			init.o
 
-DEPS = startup-stm32f1 system-stm32f1
-HAL_DEPS = stm32f1xx_hal \
-           stm32f1xx_hal_adc \
-           stm32f1xx_hal_adc_ex \
-           stm32f1xx_hal_can \
-           stm32f1xx_hal_cec \
-           stm32f1xx_hal_cortex \
-           stm32f1xx_hal_crc \
-           stm32f1xx_hal_dac \
-           stm32f1xx_hal_dac_ex \
-           stm32f1xx_hal_dma \
-           stm32f1xx_hal_eth \
-           stm32f1xx_hal_flash \
-           stm32f1xx_hal_flash_ex \
-           stm32f1xx_hal_gpio \
-           stm32f1xx_hal_gpio_ex \
-           stm32f1xx_hal_hcd \
-           stm32f1xx_hal_i2c \
-           stm32f1xx_hal_i2s \
-           stm32f1xx_hal_irda \
-           stm32f1xx_hal_iwdg \
-           stm32f1xx_hal_mmc \
-           stm32f1xx_hal_nand \
-           stm32f1xx_hal_nor \
-           stm32f1xx_hal_pccard \
-           stm32f1xx_hal_pcd \
-           stm32f1xx_hal_pcd_ex \
-           stm32f1xx_hal_pwr \
-           stm32f1xx_hal_rcc \
-           stm32f1xx_hal_rcc_ex \
-           stm32f1xx_hal_rtc \
-           stm32f1xx_hal_rtc_ex \
-           stm32f1xx_hal_sd \
-           stm32f1xx_hal_smartcard \
-           stm32f1xx_hal_spi \
-           stm32f1xx_hal_spi_ex \
-           stm32f1xx_hal_sram \
-           stm32f1xx_hal_tim \
-           stm32f1xx_hal_tim_ex \
-           stm32f1xx_hal_uart \
-           stm32f1xx_hal_usart \
-           stm32f1xx_hal_wwdg \
-           stm32f1xx_ll_adc \
-           stm32f1xx_ll_crc \
-           stm32f1xx_ll_dac \
-           stm32f1xx_ll_dma \
-           stm32f1xx_ll_exti \
-           stm32f1xx_ll_fsmc \
-           stm32f1xx_ll_gpio \
-           stm32f1xx_ll_i2c \
-           stm32f1xx_ll_pwr \
-           stm32f1xx_ll_rcc \
-           stm32f1xx_ll_rtc \
-           stm32f1xx_ll_sdmmc \
-           stm32f1xx_ll_spi \
-           stm32f1xx_ll_tim \
-           stm32f1xx_ll_usart \
-           stm32f1xx_ll_usb \
-           stm32f1xx_ll_utils
 
-# XXX: find a way to include these templates
-# stm32f1xx_hal_msp_template
-# stm32f1xx_hal_timebase_rtc_alarm_template
-# stm32f1xx_hal_timebase_tim_template
+# hal
+HAL_INC =	-I$(.CURDIR)/bsp/stm32f1/hal/include
 
-# FreeRTOS
-FREERTOS_INC =	-I$(.CURDIR)/freertos/include \
-				-I$(.CURDIR)/freertos/portable/GCC/ARM_CM3
-FREERTOS =		port heap_2 list queue tasks
+HAL =		stm32f1xx_hal.o \
+			stm32f1xx_hal_adc.o \
+			stm32f1xx_hal_adc_ex.o \
+			stm32f1xx_hal_can.o \
+			stm32f1xx_hal_cec.o \
+			stm32f1xx_hal_cortex.o \
+			stm32f1xx_hal_crc.o \
+			stm32f1xx_hal_dac.o \
+			stm32f1xx_hal_dac_ex.o \
+			stm32f1xx_hal_dma.o \
+			stm32f1xx_hal_eth.o \
+			stm32f1xx_hal_exti.o \
+			stm32f1xx_hal_flash.o \
+			stm32f1xx_hal_flash_ex.o \
+			stm32f1xx_hal_gpio.o \
+			stm32f1xx_hal_gpio_ex.o \
+			stm32f1xx_hal_hcd.o \
+			stm32f1xx_hal_i2c.o \
+			stm32f1xx_hal_i2s.o \
+			stm32f1xx_hal_irda.o \
+			stm32f1xx_hal_iwdg.o \
+			stm32f1xx_hal_mmc.o \
+			stm32f1xx_hal_nand.o \
+			stm32f1xx_hal_nor.o \
+			stm32f1xx_hal_pccard.o \
+			stm32f1xx_hal_pcd.o \
+			stm32f1xx_hal_pcd_ex.o \
+			stm32f1xx_hal_pwr.o \
+			stm32f1xx_hal_rcc.o \
+			stm32f1xx_hal_rcc_ex.o \
+			stm32f1xx_hal_rtc.o \
+			stm32f1xx_hal_rtc_ex.o \
+			stm32f1xx_hal_sd.o \
+			stm32f1xx_hal_smartcard.o \
+			stm32f1xx_hal_spi.o \
+			stm32f1xx_hal_sram.o \
+			stm32f1xx_hal_tim.o \
+			stm32f1xx_hal_tim_ex.o \
+			stm32f1xx_hal_uart.o \
+			stm32f1xx_hal_usart.o \
+			stm32f1xx_hal_wwdg.o \
+			stm32f1xx_ll_adc.o \
+			stm32f1xx_ll_crc.o \
+			stm32f1xx_ll_dac.o \
+			stm32f1xx_ll_dma.o \
+			stm32f1xx_ll_exti.o \
+			stm32f1xx_ll_fsmc.o \
+			stm32f1xx_ll_gpio.o \
+			stm32f1xx_ll_i2c.o \
+			stm32f1xx_ll_pwr.o \
+			stm32f1xx_ll_rcc.o \
+			stm32f1xx_ll_rtc.o \
+			stm32f1xx_ll_sdmmc.o \
+			stm32f1xx_ll_spi.o \
+			stm32f1xx_ll_tim.o \
+			stm32f1xx_ll_usart.o \
+			stm32f1xx_ll_usb.o \
+			stm32f1xx_ll_utils.o
 
-DRIVERS_INC = -I$(.CURDIR)/drv
-DRIVERS = itm gpio timer util usart spi can mcp2515 display
 
-.PATH:	$(.CURDIR)/stm32cubef1/hal/src $(.CURDIR)/drv \
-		$(.CURDIR)/freertos \
-		$(.CURDIR)/freertos/portable/GCC/ARM_CM3 \
-		$(.CURDIR)/freertos/portable/MemMang
+# rtos
+RTOS_INC =	-I$(.CURDIR)/bsp/stm32f1/freertos/include \
+			-I$(.CURDIR)/bsp/stm32f1/freertos/portable/GCC/ARM_CM3 \
+			-I$(.CURDIR)/bsp/stm32f1/freertos/CMSIS_RTOS_V2
+RTOS =		port.o \
+			heap_2.o \
+			list.o \
+			queue.o \
+			tasks.o \
+			timers.o
+
+# usb cdc
+USB_INC =	-I$(.CURDIR)/bsp/stm32f1/usb/core/include \
+			-I$(.CURDIR)/bsp/stm32f1/usb/class/cdc/include
+USB =		usbd_core.o \
+			usbd_ctlreq.o \
+			usbd_ioreq.o \
+			usbd_cdc.o \
+			usbd_conf.o \
+			usbd_desc.o \
+			usbd_cdc_if.o \
+			usb_device.o
+
+.PATH:	$(.CURDIR)/bsp/stm32f1/cmsis/src/stm32 \
+		$(.CURDIR)/bsp/stm32f1/cmsis/src/stm32/startup \
+		$(.CURDIR)/bsp/stm32f1/hal/src \
+		$(.CURDIR)/bsp/stm32f1/core/src \
+		$(.CURDIR)/bsp/stm32f1/usb/core/src \
+		$(.CURDIR)/bsp/stm32f1/usb/class/cdc/src \
+		$(.CURDIR)/bsp/stm32f1/freertos \
+		$(.CURDIR)/bsp/stm32f1/freertos/portable/GCC/ARM_CM3 \
+		$(.CURDIR)/bsp/stm32f1/freertos/portable/MemMang \
+		$(.CURDIR)/bsp/stm32f1/freertos/CMSIS_RTOS_V2 \
+		$(.CURDIR)/bsp/stm32f1/usb/core/src \
+		$(.CURDIR)/bsp/stm32f1/usb/class/cdc/src \
+		$(.CURDIR)/src \
+		$(.CURDIR)/dev/usb
 
 .SUFFIXES: .s .c .o
 
-all: build size
+.ORDER:	build size
+all:	build size
 
-build: obj $(PROG).elf
+build:	obj $(PROG).elf
 
-obj:	$(PROG).o $(DEPS:S/$/.o/g) $(HAL_DEPS:S/$/.o/g) $(DRIVERS:S/$/.o/g) \
-		$(FREERTOS:S/$/.o/g)
+core:		$(CORE)
+hal:		$(HAL)
+usb:		$(USB)
+rtos:		$(RTOS)
+
+obj:	hal rtos core $(PROG).o
 
 CFLAGS = -g -gdwarf-2 \
 		-Og -c -mcpu=$(CPU) -mthumb \
@@ -124,10 +158,10 @@ ASFLAGS = -c -mcpu=$(CPU) -mthumb
 # XXX: generates correct code only with -Os and -Og, not with -O0, -O1, etc.
 .c.o:
 	$(CC) $(CFLAGS) \
-		$(STM32_CMSIS_INC) \
-		$(STM32_HAL_INC) \
-		$(DRIVERS_INC) \
-		$(FREERTOS_INC) \
+		$(CORE_INC) \
+		$(HAL_INC) \
+		$(RTOS_INC) \
+		$(USB_INC) \
 		$<
 
 .s.o:
@@ -153,7 +187,11 @@ debugd:
 debug:
 	$(DB) -x ../arm-debug.gdb $(.OBJDIR)/$(PROG).elf
 
+.if defined(FW)
+PROG = $(FW:S/^/$(.CURDIR)\/test\/elf\//)
+.endif
 download:
+	@echo $(PROG)
 	$(OPENOCD) -f $(OPENOCD_SCRIPTS)/interface/$(OPENOCD_INTERFACE) \
 		-f $(OPENOCD_SCRIPTS)/board/$(OPENOCD_TARGET) \
 		-c "init" -c "reset init" \
