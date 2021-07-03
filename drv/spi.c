@@ -216,7 +216,6 @@ uint8_t spi_send(SPI_TypeDef *spi, uint8_t c) {
     return c;
 }
 
-/* api v0.2 */
 void spi_send1(uint8_t *txd, uint8_t *rxd, uint16_t size) {
     HAL_SPI_TransmitReceive(&spi1, txd, rxd, size, 100);
 }

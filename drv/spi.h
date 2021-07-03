@@ -46,4 +46,6 @@ void spi_set_mode(SPI_TypeDef *, uint8_t);
 void spi_set_clkdiv(SPI_TypeDef *, uint8_t);
 void spi_set_bitorder(SPI_TypeDef *, uint8_t);
 uint8_t spi_send(SPI_TypeDef *, uint8_t);
+
+void spi_init1();
 void spi_send1(uint8_t *, uint8_t *, uint16_t);

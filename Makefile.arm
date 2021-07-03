@@ -120,6 +120,13 @@ USB =		usbd_core.o \
 			usbd_cdc_if.o \
 			usb_device.o
 
+DRV_INC =	-I$(.CURDIR)/drv
+DRV =		gpio.o \
+			spi.o \
+			util.o \
+			can.o \
+			mcp2515.o
+
 .PATH:	$(.CURDIR)/bsp/stm32f1/cmsis/src/stm32 \
 		$(.CURDIR)/bsp/stm32f1/cmsis/src/stm32/startup \
 		$(.CURDIR)/bsp/stm32f1/hal/src \
@@ -133,7 +140,9 @@ USB =		usbd_core.o \
 		$(.CURDIR)/bsp/stm32f1/usb/core/src \
 		$(.CURDIR)/bsp/stm32f1/usb/class/cdc/src \
 		$(.CURDIR)/src \
-		$(.CURDIR)/dev/usb
+		$(.CURDIR)/dev/usb \
+		$(.CURDIR)/drv
+
 
 .SUFFIXES: .s .c .o
 
@@ -146,8 +155,9 @@ core:		$(CORE)
 hal:		$(HAL)
 usb:		$(USB)
 rtos:		$(RTOS)
+drv:		$(DRV)
 
-obj:	hal rtos core $(PROG).o
+obj:	hal rtos core drv $(PROG).o
 
 CFLAGS = -g -gdwarf-2 \
 		-Og -c -mcpu=$(CPU) -mthumb \
@@ -162,6 +172,7 @@ ASFLAGS = -c -mcpu=$(CPU) -mthumb
 		$(HAL_INC) \
 		$(RTOS_INC) \
 		$(USB_INC) \
+		$(DRV_INC) \
 		$<
 
 .s.o:
@@ -214,10 +225,9 @@ disasm: $(PROG).elf
 tags:
 	$(CTAGS) -R --format=1 --languages=C,C++ \
 		-o ../tags \
-		$(.CURDIR)/stm32cubef1 \
-		$(.CURDIR)/drv \
-		$(.CURDIR)/startup* \
-		$(.CURDIR)/system*
+		$(.CURDIR)/bsp \
+		$(.CURDIR)/dev \
+		$(.CURDIR)/src
 
 clean:
 	rm -rf $(.OBJDIR)/*

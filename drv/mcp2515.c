@@ -223,7 +223,6 @@ int mcp2515_init(uint8_t osc, uint8_t br, uint8_t sp) {
     const mcp2515_canconf_t *c;
     char canset = 0;
 
-    spi_master_init(SPI1, SPI_MODE0, SPI_BR32, SPI_MSB);
     gpio_set(GPIOA, 4);
 
     /* enter Configuration Mode */
@@ -253,9 +252,6 @@ int mcp2515_init(uint8_t osc, uint8_t br, uint8_t sp) {
     /* receives any message */
     _mcp2515_bit_modify(RXB0CTRL, RXB0CTRL_RXM1 | RXB0CTRL_RXM0 |
             RXB0CTRL_BUKT, 0xFF);
-
-    /* enable external interrupts */
-    _enable_pb10_int();
 
     /* enable MCP2515 interrupts */
     _mcp2515_bit_modify(CANINTE, CANINTE_RX0IE | CANINTE_RX1IE |

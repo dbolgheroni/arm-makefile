@@ -22,7 +22,3 @@ void delay_us(uint32_t us) {
     while(t);
     //while(t > 0);
 }
-
-void SysTick_Handler(void) {
-    HAL_IncTick();
-}
