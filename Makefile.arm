@@ -173,7 +173,7 @@ $(PROG).elf: obj
 		-g -static -mcpu=$(CPU) \
 		-Wl,-Map,$(@:R).map,--gc-sections,--cref \
 		-Wl,--start-group -lc -lgcc -lnosys -Wl,--end-group \
-		-T $(.CURDIR)/ld/stm32f103c8tx_flash.ld \
+		-T $(.CURDIR)/ld/STM32F103C8Tx_FLASH.ld \
 		-o $@
 
 startup-stm32f1.o:
