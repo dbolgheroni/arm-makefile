@@ -182,7 +182,7 @@ startup-stm32f1.o:
 .PHONY: download size disasm tags debugd debug
 debugd:
 	$(OPENOCD) -f $(OPENOCD_SCRIPTS)/interface/$(OPENOCD_INTERFACE) \
-		-f $(OPENOCD_SCRIPTS)/target/$(OPENOCD_TARGET)
+		-f $(OPENOCD_SCRIPTS)/board/$(OPENOCD_TARGET)
 
 debug:
 	$(DB) -x ../arm-debug.gdb $(.OBJDIR)/$(PROG).elf
