@@ -35,12 +35,13 @@
 
 static void _mcp2515_reset(void) {
     uint8_t instr[1];
-    uint8_t rxd[8];
+    uint8_t rxd[1];
+
     gpio_reset(GPIOA, 4);
-    //spi_send(SPI1, MCP2515_RESET_INSTR);
     instr[0] = MCP2515_RESET_INSTR;
     spi_send1(instr, rxd, 1);
     gpio_set(GPIOA, 4);
+
     wait_cycles(10000);
 }
 
@@ -54,9 +55,6 @@ static uint8_t _mcp2515_read(uint8_t reg) {
     instr[2] = 0;
 
     gpio_reset(GPIOA, 4);
-    //spi_send(SPI1, MCP2515_READ_INSTR);
-    //spi_send(SPI1, reg);
-    //data = spi_send(SPI1, 0x00);
     spi_send1(instr, rxd, 3);
     data = rxd[2];
     gpio_set(GPIOA, 4);
@@ -65,24 +63,12 @@ static uint8_t _mcp2515_read(uint8_t reg) {
 }
 
 static void _mcp2515_read_rx_buffer(uint8_t buf, struct can_frame *d) {
-    //int i;
     uint8_t instr[14] = {0};
     uint8_t rxd[14];
 
-    gpio_reset(GPIOA, 4);
-    //spi_send(SPI1, MCP2515_READRXB_INSTR | buf);
-    //spi_send(SPI1, 0x00); /* ignore sidh */
-    //spi_send(SPI1, 0x00); /* ignore sidl */
-    //spi_send(SPI1, 0x00); /* ignore eid8 */
-    //spi_send(SPI1, 0x00); /* ignore eid0 */
-    //d->dlc = spi_send(SPI1, 0x00);
-
-    //for (i = 0; i < d->dlc; i++) {
-    //    d->data[i] = spi_send(SPI1, 0x00);
-    //}
-
     instr[0] = MCP2515_READRXB_INSTR | buf;
 
+    gpio_reset(GPIOA, 4);
     spi_send1(instr, rxd, 14);
 
     d->dlc = rxd[5];
@@ -90,7 +76,6 @@ static void _mcp2515_read_rx_buffer(uint8_t buf, struct can_frame *d) {
     for (unsigned int i = 0; i < d->dlc; i++) {
         d->data[i] = rxd[i+6];
     }
-
     gpio_set(GPIOA, 4);
 }
 
@@ -103,29 +88,15 @@ static void _mcp2515_write(uint8_t reg, uint8_t data) {
     instr[2] = data;
 
     gpio_reset(GPIOA, 4);
-    //spi_send(SPI1, MCP2515_WRITE_INSTR);
-    //spi_send(SPI1, reg);
-    //spi_send(SPI1, data);
     spi_send1(instr, rxd, 3);
     gpio_set(GPIOA, 4);
 }
 
 static void _mcp2515_load_tx_buffer(uint8_t buf, txbconf_t *c, struct can_frame *d) {
-    //unsigned int i = 0;
     uint8_t instr[14] = {0};
     uint8_t rxd[14];
 
     gpio_reset(GPIOA, 4);
-    //spi_send(SPI1, MCP2515_LOADTXB_INSTR | buf);
-    //spi_send(SPI1, c->txbnsidh);
-    //spi_send(SPI1, c->txbnsidl);
-    //spi_send(SPI1, c->txbneid8);
-    //spi_send(SPI1, c->txbneid0);
-
-    //spi_send(SPI1, d->dlc);
-    //for (i = 0; i < d->dlc; i++) {
-    //    spi_send(SPI1, (d->data)[i]);
-    //}
     instr[0] = MCP2515_LOADTXB_INSTR | buf;
     instr[1] = c->txbnsidh;
     instr[2] = c->txbnsidl;
@@ -154,39 +125,52 @@ static void _mcp2515_load_tx_buffer(uint8_t buf, txbconf_t *c, struct can_frame 
 }
 
 static void _mcp2515_rts(uint8_t buf) {
+    uint8_t instr[1];
+    uint8_t rxd[1];
+
+    instr[0] = MCP2515_RTS_INSTR | buf;
+
     gpio_reset(GPIOA, 4);
-    spi_send(SPI1, MCP2515_RTS_INSTR | buf);
+    spi_send1(instr, rxd, 1);
     gpio_set(GPIOA, 4);
 }
 
 static uint8_t _mcp2515_read_status(void) {
-    uint8_t status;
+    uint8_t instr[1];
+    uint8_t rxd[1];
+
+    instr[0] = MCP2515_READSTATUS_INSTR;
 
     gpio_reset(GPIOA, 4);
-    spi_send(SPI1, MCP2515_READSTATUS_INSTR);
-    status = spi_send(SPI1, 0x00);
+    spi_send1(instr, rxd, 1);
     gpio_set(GPIOA, 4);
 
-    return status;
+    return rxd[0];
 }
 
 static uint8_t _mcp2515_rx_status(void) {
-    uint8_t status;
+    uint8_t instr[1];
+    uint8_t rxd[1];
 
     gpio_reset(GPIOA, 4);
-    spi_send(SPI1, MCP2515_RXSTATUS_INSTR);
-    status = spi_send(SPI1, 0x00);
+    instr[0] = MCP2515_RXSTATUS_INSTR;
+    spi_send1(instr, rxd, 1);
     gpio_set(GPIOA, 4);
 
-    return status;
+    return rxd[0];
 }
 
 static void _mcp2515_bit_modify(uint8_t reg, uint8_t mask, uint8_t data) {
+    uint8_t instr[4];
+    uint8_t rxd[1];
+
+    instr[0] = MCP2515_BITMODIFY_INSTR;
+    instr[1] = reg;
+    instr[2] = mask;
+    instr[3] = data;
+
     gpio_reset(GPIOA, 4);
-    spi_send(SPI1, MCP2515_BITMODIFY_INSTR);
-    spi_send(SPI1, reg);
-    spi_send(SPI1, mask);
-    spi_send(SPI1, data);
+    spi_send1(instr, rxd, 4);
     gpio_set(GPIOA, 4);
 }
 
@@ -233,7 +217,6 @@ void _enable_pb10_int(void) {
     NVIC_SetPriority(SysTick_IRQn, 6U);
     NVIC_EnableIRQ(EXTI15_10_IRQn);
     __enable_irq();
-
 }
 
 int mcp2515_init(uint8_t osc, uint8_t br, uint8_t sp) {
