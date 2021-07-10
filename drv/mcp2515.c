@@ -25,7 +25,6 @@
 #include <stm32f103xb.h>
 #include <stdlib.h>
 
-#include <spi.h>
 #include <gpio.h>
 #include <spi.h>
 #include <usart.h>
@@ -33,14 +32,14 @@
 
 #include <mcp2515.h>
 
+extern SPI_HandleTypeDef hspi1;
+
 static void _mcp2515_reset(void) {
     uint8_t instr[1];
     uint8_t rxd[1];
 
-    gpio_reset(GPIOA, 4);
     instr[0] = MCP2515_RESET_INSTR;
-    spi_send1(instr, rxd, 1);
-    gpio_set(GPIOA, 4);
+    spi_send1(&hspi1, instr, rxd, 1);
 
     wait_cycles(10000);
 }
@@ -54,10 +53,8 @@ static uint8_t _mcp2515_read(uint8_t reg) {
     instr[1] = reg;
     instr[2] = 0;
 
-    gpio_reset(GPIOA, 4);
-    spi_send1(instr, rxd, 3);
+    spi_send1(&hspi1, instr, rxd, 3);
     data = rxd[2];
-    gpio_set(GPIOA, 4);
 
     return data;
 }
@@ -68,15 +65,13 @@ static void _mcp2515_read_rx_buffer(uint8_t buf, struct can_frame *d) {
 
     instr[0] = MCP2515_READRXB_INSTR | buf;
 
-    gpio_reset(GPIOA, 4);
-    spi_send1(instr, rxd, 14);
+    spi_send1(&hspi1, instr, rxd, 14);
 
     d->dlc = rxd[5];
 
     for (unsigned int i = 0; i < d->dlc; i++) {
         d->data[i] = rxd[i+6];
     }
-    gpio_set(GPIOA, 4);
 }
 
 static void _mcp2515_write(uint8_t reg, uint8_t data) {
@@ -87,16 +82,13 @@ static void _mcp2515_write(uint8_t reg, uint8_t data) {
     instr[1] = reg;
     instr[2] = data;
 
-    gpio_reset(GPIOA, 4);
-    spi_send1(instr, rxd, 3);
-    gpio_set(GPIOA, 4);
+    spi_send1(&hspi1, instr, rxd, 3);
 }
 
 static void _mcp2515_load_tx_buffer(uint8_t buf, txbconf_t *c, struct can_frame *d) {
     uint8_t instr[14] = {0};
     uint8_t rxd[14];
 
-    gpio_reset(GPIOA, 4);
     instr[0] = MCP2515_LOADTXB_INSTR | buf;
     instr[1] = c->txbnsidh;
     instr[2] = c->txbnsidl;
@@ -108,7 +100,7 @@ static void _mcp2515_load_tx_buffer(uint8_t buf, txbconf_t *c, struct can_frame 
         instr[i+6] = d->data[i];
     }
 
-    spi_send1(instr, rxd, 14);
+    spi_send1(&hspi1, instr, rxd, 14);
 
     /* without optimized instructions (for testing purposes)
     _mcp2515_write(TXB0SIDH, c->txbnsidh);
@@ -120,8 +112,6 @@ static void _mcp2515_load_tx_buffer(uint8_t buf, txbconf_t *c, struct can_frame 
         _mcp2515_write(TXBnDm(0, i), (d->data)[i]);
     }
     */
-
-    gpio_set(GPIOA, 4);
 }
 
 static void _mcp2515_rts(uint8_t buf) {
@@ -130,9 +120,7 @@ static void _mcp2515_rts(uint8_t buf) {
 
     instr[0] = MCP2515_RTS_INSTR | buf;
 
-    gpio_reset(GPIOA, 4);
-    spi_send1(instr, rxd, 1);
-    gpio_set(GPIOA, 4);
+    spi_send1(&hspi1, instr, rxd, 1);
 }
 
 static uint8_t _mcp2515_read_status(void) {
@@ -141,9 +129,7 @@ static uint8_t _mcp2515_read_status(void) {
 
     instr[0] = MCP2515_READSTATUS_INSTR;
 
-    gpio_reset(GPIOA, 4);
-    spi_send1(instr, rxd, 1);
-    gpio_set(GPIOA, 4);
+    spi_send1(&hspi1, instr, rxd, 1);
 
     return rxd[0];
 }
@@ -152,10 +138,9 @@ static uint8_t _mcp2515_rx_status(void) {
     uint8_t instr[1];
     uint8_t rxd[1];
 
-    gpio_reset(GPIOA, 4);
     instr[0] = MCP2515_RXSTATUS_INSTR;
-    spi_send1(instr, rxd, 1);
-    gpio_set(GPIOA, 4);
+
+    spi_send1(&hspi1, instr, rxd, 1);
 
     return rxd[0];
 }
@@ -169,9 +154,7 @@ static void _mcp2515_bit_modify(uint8_t reg, uint8_t mask, uint8_t data) {
     instr[2] = mask;
     instr[3] = data;
 
-    gpio_reset(GPIOA, 4);
-    spi_send1(instr, rxd, 4);
-    gpio_set(GPIOA, 4);
+    spi_send1(&hspi1, instr, rxd, 4);
 }
 
 static uint8_t _mcp2515_read_tec(void) {
@@ -222,8 +205,6 @@ void _enable_pb10_int(void) {
 int mcp2515_init(uint8_t osc, uint8_t br, uint8_t sp) {
     const mcp2515_canconf_t *c;
     char canset = 0;
-
-    gpio_set(GPIOA, 4);
 
     /* enter Configuration Mode */
     _mcp2515_reset();
