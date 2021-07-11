@@ -140,6 +140,7 @@ DRV =		gpio.o \
 		$(.CURDIR)/bsp/stm32f1/usb/core/src \
 		$(.CURDIR)/bsp/stm32f1/usb/class/cdc/src \
 		$(.CURDIR)/src \
+		$(.CURDIR)/src-examples \
 		$(.CURDIR)/dev/usb \
 		$(.CURDIR)/drv
 
