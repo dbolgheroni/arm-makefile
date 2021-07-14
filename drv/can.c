@@ -30,6 +30,14 @@ struct can_frame *can_frame_init() {
     return f;
 }
 
+void can_frame_init1(struct can_frame *f) {
+    f->dlc = 0;
+    for (int i = 0; i < 8; i++) {
+        (f->data)[i] = 0;
+    }
+}
+
+/* add */
 void can_frame_add(struct can_frame *d, uint8_t v) {
     if (d->dlc >= 8) {
         return;
