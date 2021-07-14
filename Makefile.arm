@@ -102,7 +102,7 @@ RTOS_INC =	-I$(.CURDIR)/bsp/stm32f1/freertos/include \
 			-I$(.CURDIR)/bsp/stm32f1/freertos/portable/GCC/ARM_CM3 \
 			-I$(.CURDIR)/bsp/stm32f1/freertos/CMSIS_RTOS_V2
 RTOS =		port.o \
-			heap_2.o \
+			heap_4.o \
 			list.o \
 			queue.o \
 			tasks.o \
