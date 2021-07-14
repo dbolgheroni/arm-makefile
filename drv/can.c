@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <can.h>
 
+#include "FreeRTOS.h"
+
 const struct canconf {
     uint8_t br;
     uint8_t sp;
@@ -18,9 +20,10 @@ const struct canconf {
     { 0, 0, 0 },
 };
 
+/* init */
 struct can_frame *can_frame_init() {
     int i;
-    can_frame_t *f = malloc(sizeof(struct can_frame));
+    can_frame_t *f = pvPortMalloc(sizeof(struct can_frame));
 
     f->dlc = 0;
     for (i = 0; i < 8; i++) {
