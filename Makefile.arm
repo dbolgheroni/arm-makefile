@@ -109,8 +109,8 @@ RTOS =		port.o \
 			timers.o
 
 # usb cdc
-USB_INC =	-I$(.CURDIR)/bsp/stm32f1/usb/core/include \
-			-I$(.CURDIR)/bsp/stm32f1/usb/class/cdc/include
+USB_INC =	-I$(.CURDIR)/bsp/stm32f1/usb/include \
+			-I$(.CURDIR)/dev/usb
 USB =		usbd_core.o \
 			usbd_ctlreq.o \
 			usbd_ioreq.o \
@@ -137,8 +137,7 @@ DRV =		gpio.o \
 		$(.CURDIR)/bsp/stm32f1/freertos/portable/GCC/ARM_CM3 \
 		$(.CURDIR)/bsp/stm32f1/freertos/portable/MemMang \
 		$(.CURDIR)/bsp/stm32f1/freertos/CMSIS_RTOS_V2 \
-		$(.CURDIR)/bsp/stm32f1/usb/core/src \
-		$(.CURDIR)/bsp/stm32f1/usb/class/cdc/src \
+		$(.CURDIR)/bsp/stm32f1/usb/src \
 		$(.CURDIR)/src \
 		$(.CURDIR)/src-examples \
 		$(.CURDIR)/dev/usb \
@@ -158,7 +157,7 @@ usb:		$(USB)
 rtos:		$(RTOS)
 drv:		$(DRV)
 
-obj:	hal rtos core drv $(PROG).o
+obj:	hal rtos core drv usb $(PROG).o
 
 CFLAGS = -g -gdwarf-2 \
 		-Og -c -mcpu=$(CPU) -mthumb \
