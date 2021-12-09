@@ -28,8 +28,8 @@ struct can_frame {
 typedef struct can_frame can_frame_t;
 
 /* init */
-struct can_frame *can_frame_init();
-void can_frame_init1(struct can_frame *);
+struct can_frame *can_frame_init1();
+void can_frame_init(struct can_frame *);
 
 /* add */
 void can_frame_add(struct can_frame *, uint8_t);
