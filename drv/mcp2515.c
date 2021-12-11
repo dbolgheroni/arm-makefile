@@ -214,14 +214,15 @@ static void _mcp2515_rts(uint8_t buf) {
 
 //------------------------------------------------------------------------------
 static uint8_t _mcp2515_read_status1(void) {
-    uint8_t instr[1];
-    uint8_t rxd[1];
+    uint8_t instr[2];
+    uint8_t rxd[2];
 
     instr[0] = MCP2515_READSTATUS_INSTR;
+    instr[1] = 0;
 
-    spi_send1(&hspi1, instr, rxd, 1);
+    spi_send1(&hspi1, instr, rxd, 2);
 
-    return rxd[0];
+    return rxd[1];
 }
 
 static uint8_t _mcp2515_read_status(void) {
