@@ -26,6 +26,7 @@
 #include <stdlib.h>
 
 #include "FreeRTOS.h"
+#include "task.h"
 
 #include <gpio.h>
 #include <spi.h>
@@ -410,11 +411,9 @@ int mcp2515_init(uint8_t osc, uint8_t br, uint8_t sp) {
 
 //------------------------------------------------------------------------------
 /* irq handler callback */
-#if 0
 void HAL_GPIO_EXTI_Callback(uint16_t pin) {
     uint8_t read_status;
-
-    __disable_irq();
+    can_frame_t rxb;
 
     read_status = _mcp2515_read_status1();
 
@@ -431,33 +430,28 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin) {
 
     /* received frame */
     if (read_status & MCP2515_READSTATUS_RX0IF) {
-        can_frame_t *rxb0 = can_frame_init1();
+        /* can_frame_init1() tries to malloc inside irq handler */
+        can_frame_init(&rxb);
 
         _mcp2515_bit_modify1(CANINTF, CANINTF_RX0IF, 0x00);
-        _mcp2515_read_rx_buffer1(MCP2515_READRXB_RXB0SIDH, rxb0);
+        _mcp2515_read_rx_buffer1(MCP2515_READRXB_RXB0SIDH, &rxb);
 
-        mcp2515_int_rx(rxb0);
-        //vPortFree(rxb0);
-        free(rxb0);
+        mcp2515_int_rx(&rxb);
     }
     if (read_status & MCP2515_READSTATUS_RX1IF) {
-        can_frame_t *rxb1 = can_frame_init1();
+        /* can_frame_init1() tries to malloc inside irq handler */
+        can_frame_init(&rxb);
 
         _mcp2515_bit_modify1(CANINTF, CANINTF_RX1IF, 0x00);
-        _mcp2515_read_rx_buffer1(MCP2515_READRXB_RXB1SIDH, rxb1);
+        _mcp2515_read_rx_buffer1(MCP2515_READRXB_RXB0SIDH, &rxb);
 
-        mcp2515_int_rx(rxb1);
-        //vPortFree(rxb1);
-        free(rxb1);
+        mcp2515_int_rx(&rxb);
     }
 
-    __enable_irq();
-
     return;
-
 }
-#endif
 
+#if 0
 void HAL_GPIO_EXTI_Callback(uint16_t pin) {
     uint8_t read_status;
 
@@ -503,6 +497,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t pin) {
 
     return;
 }
+#endif
 
 //------------------------------------------------------------------------------
 void mcp2515_send1(uint8_t ft, const uint32_t id, const int prio,
@@ -512,7 +507,7 @@ void mcp2515_send1(uint8_t ft, const uint32_t id, const int prio,
     uint8_t read_status;
     txbconf_t c;
 
-    __disable_irq();
+    vTaskSuspendAll();
 
     read_status = _mcp2515_read_status1();
 
@@ -562,7 +557,7 @@ void mcp2515_send1(uint8_t ft, const uint32_t id, const int prio,
         _mcp2515_rts1(MCP2515_RTS_TXBn(txbn));
     }
 
-    __enable_irq();
+    xTaskResumeAll();
 }
 
 void mcp2515_send(uint8_t ft, const uint32_t id, const int prio,

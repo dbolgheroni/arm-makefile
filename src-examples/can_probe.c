@@ -78,15 +78,11 @@ int main() {
         Error_Handler();
     };
 
-    can_probe1();
-
-#if 0
     xTaskCreate(can_probe, (char *)"can_probe", configMINIMAL_STACK_SIZE,
             (void *)NULL, 1, NULL);
     vTaskStartScheduler();
 
     for (;;);
-#endif
 
     return 0;
 }

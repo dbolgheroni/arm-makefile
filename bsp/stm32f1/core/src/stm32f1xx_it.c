@@ -21,6 +21,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "init.h"
 #include "stm32f1xx_it.h"
+#include "FreeRTOS.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 /* USER CODE END Includes */
@@ -179,6 +180,7 @@ void TIM1_UP_IRQHandler(void)
   */
 void EXTI15_10_IRQHandler(void)
 {
+  BaseType_t xHigherPriorityTaskWoken = pdFALSE;
   /* USER CODE BEGIN EXTI15_10_IRQn 0 */
   /* USER CODE END EXTI15_10_IRQn 0 */
 
@@ -186,6 +188,7 @@ void EXTI15_10_IRQHandler(void)
 
   /* USER CODE BEGIN EXTI15_10_IRQn 1 */
   /* USER CODE END EXTI15_10_IRQn 1 */
+  portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
 /* USER CODE BEGIN 1 */

@@ -23,8 +23,7 @@ const struct canconf {
 /* init */
 struct can_frame *can_frame_init1() {
     int i;
-    //can_frame_t *f = pvPortMalloc(sizeof(struct can_frame));
-    can_frame_t *f = malloc(sizeof(struct can_frame));
+    can_frame_t *f = pvPortMalloc(sizeof(struct can_frame));
 
     f->dlc = 0;
     for (i = 0; i < 8; i++) {
