@@ -57,13 +57,13 @@ void can_probe() {
     can_frame_add(&f2, 0xAA);
 
     for (;;) {
-        mcp2515_send(STDF, 0x74, LOW, &f1);
+        mcp2515_send1(STDF, 0x74, LOW, &f1);
         HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
         HAL_Delay(50);
         HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
         HAL_Delay(450);
 
-        mcp2515_send(EXTF, 0x5454, HIGHEST, &f2);
+        mcp2515_send1(EXTF, 0x5454, HIGHEST, &f2);
         HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
         HAL_Delay(50);
         HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
