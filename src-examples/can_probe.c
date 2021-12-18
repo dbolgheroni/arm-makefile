@@ -10,6 +10,8 @@
 #include "init.h"
 
 extern SPI_HandleTypeDef hspi1;
+extern TaskHandle_t can_recv_h;
+void can_recv(void *);
 
 void can_probe1() {
     struct can_frame *f1;
@@ -80,6 +82,8 @@ int main() {
 
     xTaskCreate(can_probe, (char *)"can_probe", configMINIMAL_STACK_SIZE,
             (void *)NULL, 1, NULL);
+    xTaskCreate(can_recv, (char *)"can_recv", configMINIMAL_STACK_SIZE,
+            (void *)NULL, 1, &can_recv_h);
     vTaskStartScheduler();
 
     for (;;);

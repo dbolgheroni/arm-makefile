@@ -36,6 +36,7 @@
 #include <mcp2515.h>
 
 extern SPI_HandleTypeDef hspi1;
+TaskHandle_t can_recv_h;
 
 //------------------------------------------------------------------------------
 static void _mcp2515_reset1(void) {
@@ -410,94 +411,65 @@ int mcp2515_init(uint8_t osc, uint8_t br, uint8_t sp) {
 }
 
 //------------------------------------------------------------------------------
-/* irq handler callback */
 void HAL_GPIO_EXTI_Callback(uint16_t pin) {
-    uint8_t read_status;
-    can_frame_t rxb;
-
-    read_status = _mcp2515_read_status1();
-
-    /* sent frame */
-    if (read_status & MCP2515_READSTATUS_TX0IF) {
-        _mcp2515_bit_modify1(CANINTF, CANINTF_TX0IF, 0x00);
-    }
-    if (read_status & MCP2515_READSTATUS_TX1IF) {
-        _mcp2515_bit_modify1(CANINTF, CANINTF_TX1IF, 0x00);
-    }
-    if (read_status & MCP2515_READSTATUS_TX2IF) {
-        _mcp2515_bit_modify1(CANINTF, CANINTF_TX2IF, 0x00);
-    }
-
-    /* received frame */
-    if (read_status & MCP2515_READSTATUS_RX0IF) {
-        /* can_frame_init1() tries to malloc inside irq handler */
-        can_frame_init(&rxb);
-
-        _mcp2515_bit_modify1(CANINTF, CANINTF_RX0IF, 0x00);
-        _mcp2515_read_rx_buffer1(MCP2515_READRXB_RXB0SIDH, &rxb);
-
-        mcp2515_int_rx(&rxb);
-    }
-    if (read_status & MCP2515_READSTATUS_RX1IF) {
-        /* can_frame_init1() tries to malloc inside irq handler */
-        can_frame_init(&rxb);
-
-        _mcp2515_bit_modify1(CANINTF, CANINTF_RX1IF, 0x00);
-        _mcp2515_read_rx_buffer1(MCP2515_READRXB_RXB0SIDH, &rxb);
-
-        mcp2515_int_rx(&rxb);
-    }
-
-    return;
+    vTaskNotifyGiveFromISR(can_recv_h, pdFALSE);
 }
 
-#if 0
-void HAL_GPIO_EXTI_Callback(uint16_t pin) {
-    uint8_t read_status;
+void can_recv(void *pvParameters) {
+    uint32_t n;
+    const TickType_t wait = pdMS_TO_TICKS(100);
 
-    __disable_irq();
+    for (;;) {
+        /* pdTRUE to act like a binary semaphore */
+        n = ulTaskNotifyTake(pdTRUE, wait);
 
-    read_status = _mcp2515_read_status();
+        if (n == 0x1) {
+            uint8_t read_status;
+            can_frame_t rxb;
 
-    /* sent frame */
-    if (read_status & MCP2515_READSTATUS_TX0IF) {
-        _mcp2515_bit_modify(CANINTF, CANINTF_TX0IF, 0x00);
+            //vTaskSuspendAll();
+            //taskENTER_CRITICAL();
+            taskDISABLE_INTERRUPTS();
+
+            read_status = _mcp2515_read_status1();
+
+            /* sent frame */
+            if (read_status & MCP2515_READSTATUS_TX0IF) {
+                _mcp2515_bit_modify1(CANINTF, CANINTF_TX0IF, 0x00);
+            }
+            if (read_status & MCP2515_READSTATUS_TX1IF) {
+                _mcp2515_bit_modify1(CANINTF, CANINTF_TX1IF, 0x00);
+            }
+            if (read_status & MCP2515_READSTATUS_TX2IF) {
+                _mcp2515_bit_modify1(CANINTF, CANINTF_TX2IF, 0x00);
+            }
+
+            /* received frame */
+            if (read_status & MCP2515_READSTATUS_RX0IF) {
+                /* can_frame_init1() tries to malloc inside irq handler */
+                can_frame_init(&rxb);
+
+                _mcp2515_bit_modify1(CANINTF, CANINTF_RX0IF, 0x00);
+                _mcp2515_read_rx_buffer1(MCP2515_READRXB_RXB0SIDH, &rxb);
+
+                mcp2515_int_rx(&rxb);
+            }
+            if (read_status & MCP2515_READSTATUS_RX1IF) {
+                /* can_frame_init1() tries to malloc inside irq handler */
+                can_frame_init(&rxb);
+
+                _mcp2515_bit_modify1(CANINTF, CANINTF_RX1IF, 0x00);
+                _mcp2515_read_rx_buffer1(MCP2515_READRXB_RXB0SIDH, &rxb);
+
+                mcp2515_int_rx(&rxb);
+            }
+
+            //xTaskResumeAll();
+            //taskEXIT_CRITICAL();
+            taskENABLE_INTERRUPTS();
+        }
     }
-    if (read_status & MCP2515_READSTATUS_TX1IF) {
-        _mcp2515_bit_modify(CANINTF, CANINTF_TX1IF, 0x00);
-    }
-    if (read_status & MCP2515_READSTATUS_TX2IF) {
-        _mcp2515_bit_modify(CANINTF, CANINTF_TX2IF, 0x00);
-    }
-
-    /* received frame */
-    if (read_status & MCP2515_READSTATUS_RX0IF) {
-        can_frame_t *rxb0 = can_frame_init1();
-
-        _mcp2515_bit_modify(CANINTF, CANINTF_RX0IF, 0x00);
-        _mcp2515_read_rx_buffer(MCP2515_READRXB_RXB0SIDH, rxb0);
-
-        mcp2515_int_rx(rxb0);
-        free(rxb0);
-    }
-    if (read_status & MCP2515_READSTATUS_RX1IF) {
-        can_frame_t *rxb1 = can_frame_init1();
-
-        _mcp2515_bit_modify(CANINTF, CANINTF_RX1IF, 0x00);
-        _mcp2515_read_rx_buffer(MCP2515_READRXB_RXB1SIDH, rxb1);
-
-        mcp2515_int_rx(rxb1);
-        free(rxb1);
-    }
-
-    /* clear pending register */
-    EXTI->PR |= EXTI_PR_PR10;
-
-    __enable_irq();
-
-    return;
 }
-#endif
 
 //------------------------------------------------------------------------------
 void mcp2515_send1(uint8_t ft, const uint32_t id, const int prio,
@@ -507,7 +479,9 @@ void mcp2515_send1(uint8_t ft, const uint32_t id, const int prio,
     uint8_t read_status;
     txbconf_t c;
 
-    vTaskSuspendAll();
+    //vTaskSuspendAll();
+    //taskENTER_CRITICAL();
+    taskDISABLE_INTERRUPTS();
 
     read_status = _mcp2515_read_status1();
 
@@ -557,7 +531,9 @@ void mcp2515_send1(uint8_t ft, const uint32_t id, const int prio,
         _mcp2515_rts1(MCP2515_RTS_TXBn(txbn));
     }
 
-    xTaskResumeAll();
+    //xTaskResumeAll();
+    //taskEXIT_CRITICAL();
+    taskENABLE_INTERRUPTS();
 }
 
 void mcp2515_send(uint8_t ft, const uint32_t id, const int prio,
