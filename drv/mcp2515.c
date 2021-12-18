@@ -49,13 +49,6 @@ static void _mcp2515_reset1(void) {
     wait_cycles(10000);
 }
 
-static void _mcp2515_reset(void) {
-    gpio_reset(GPIOA, 4);
-    spi_send(SPI1, MCP2515_RESET_INSTR);
-    gpio_set(GPIOA, 4);
-    wait_cycles(10000);
-}
-
 //------------------------------------------------------------------------------
 static uint8_t _mcp2515_read1(uint8_t reg) {
     uint8_t data;
@@ -68,18 +61,6 @@ static uint8_t _mcp2515_read1(uint8_t reg) {
 
     spi_send1(&hspi1, instr, rxd, 3);
     data = rxd[2];
-
-    return data;
-}
-
-static uint8_t _mcp2515_read(uint8_t reg) {
-    uint8_t data;
-
-    gpio_reset(GPIOA, 4);
-    spi_send(SPI1, MCP2515_READ_INSTR);
-    spi_send(SPI1, reg);
-    data = spi_send(SPI1, 0x00);
-    gpio_set(GPIOA, 4);
 
     return data;
 }
@@ -100,24 +81,6 @@ static void _mcp2515_read_rx_buffer1(uint8_t buf, struct can_frame *d) {
     }
 }
 
-static void _mcp2515_read_rx_buffer(uint8_t buf, struct can_frame *d) {
-    int i;
-
-    gpio_reset(GPIOA, 4);
-    spi_send(SPI1, MCP2515_READRXB_INSTR | buf);
-    spi_send(SPI1, 0x00); /* ignore sidh */
-    spi_send(SPI1, 0x00); /* ignore sidl */
-    spi_send(SPI1, 0x00); /* ignore eid8 */
-    spi_send(SPI1, 0x00); /* ignore eid0 */
-    d->dlc = spi_send(SPI1, 0x00);
-
-    for (i = 0; i < d->dlc; i++) {
-        d->data[i] = spi_send(SPI1, 0x00);
-    }
-
-    gpio_set(GPIOA, 4);
-}
-
 //------------------------------------------------------------------------------
 static void _mcp2515_write1(uint8_t reg, uint8_t data) {
     uint8_t instr[3];
@@ -129,15 +92,6 @@ static void _mcp2515_write1(uint8_t reg, uint8_t data) {
 
     spi_send1(&hspi1, instr, rxd, 3);
 }
-
-static void _mcp2515_write(uint8_t reg, uint8_t data) {
-    gpio_reset(GPIOA, 4);
-    spi_send(SPI1, MCP2515_WRITE_INSTR);
-    spi_send(SPI1, reg);
-    spi_send(SPI1, data);
-    gpio_set(GPIOA, 4);
-}
-
 
 //------------------------------------------------------------------------------
 static void _mcp2515_load_tx_buffer1(uint8_t buf, txbconf_t *c, struct can_frame *d) {
@@ -169,35 +123,6 @@ static void _mcp2515_load_tx_buffer1(uint8_t buf, txbconf_t *c, struct can_frame
     */
 }
 
-static void _mcp2515_load_tx_buffer(uint8_t buf, txbconf_t *c, struct can_frame *d) {
-    unsigned int i = 0;
-
-    gpio_reset(GPIOA, 4);
-    spi_send(SPI1, MCP2515_LOADTXB_INSTR | buf);
-    spi_send(SPI1, c->txbnsidh);
-    spi_send(SPI1, c->txbnsidl);
-    spi_send(SPI1, c->txbneid8);
-    spi_send(SPI1, c->txbneid0);
-
-    spi_send(SPI1, d->dlc);
-    for (i = 0; i < d->dlc; i++) {
-        spi_send(SPI1, (d->data)[i]);
-    }
-
-    /* without optimized instructions (for testing purposes)
-    _mcp2515_write(TXB0SIDH, c->txbnsidh);
-    _mcp2515_write(TXB0SIDL, c->txbnsidl);
-    _mcp2515_write(TXB0EID8, c->txbneid8);
-    _mcp2515_write(TXB0EID0, c->txbneid0);
-    _mcp2515_write(TXB0DLC, d->dlc);
-    for (i = 0; i < d->dlc; i++) {
-        _mcp2515_write(TXBnDm(0, i), (d->data)[i]);
-    }
-    */
-
-    gpio_set(GPIOA, 4);
-}
-
 //------------------------------------------------------------------------------
 static void _mcp2515_rts1(uint8_t buf) {
     uint8_t instr[1];
@@ -206,12 +131,6 @@ static void _mcp2515_rts1(uint8_t buf) {
     instr[0] = MCP2515_RTS_INSTR | buf;
 
     spi_send1(&hspi1, instr, rxd, 1);
-}
-
-static void _mcp2515_rts(uint8_t buf) {
-    gpio_reset(GPIOA, 4);
-    spi_send(SPI1, MCP2515_RTS_INSTR | buf);
-    gpio_set(GPIOA, 4);
 }
 
 //------------------------------------------------------------------------------
@@ -227,18 +146,6 @@ static uint8_t _mcp2515_read_status1(void) {
     return rxd[1];
 }
 
-static uint8_t _mcp2515_read_status(void) {
-    uint8_t status;
-
-    gpio_reset(GPIOA, 4);
-    spi_send(SPI1, MCP2515_READSTATUS_INSTR);
-    status = spi_send(SPI1, 0x00);
-    gpio_set(GPIOA, 4);
-
-    return status;
-}
-
-
 //------------------------------------------------------------------------------
 static uint8_t _mcp2515_rx_status1(void) {
     uint8_t instr[1];
@@ -249,17 +156,6 @@ static uint8_t _mcp2515_rx_status1(void) {
     spi_send1(&hspi1, instr, rxd, 1);
 
     return rxd[0];
-}
-
-static uint8_t _mcp2515_rx_status(void) {
-    uint8_t status;
-
-    gpio_reset(GPIOA, 4);
-    spi_send(SPI1, MCP2515_RXSTATUS_INSTR);
-    status = spi_send(SPI1, 0x00);
-    gpio_set(GPIOA, 4);
-
-    return status;
 }
 
 //------------------------------------------------------------------------------
@@ -275,27 +171,10 @@ static void _mcp2515_bit_modify1(uint8_t reg, uint8_t mask, uint8_t data) {
     spi_send1(&hspi1, instr, rxd, 4);
 }
 
-static void _mcp2515_bit_modify(uint8_t reg, uint8_t mask, uint8_t data) {
-    gpio_reset(GPIOA, 4);
-    spi_send(SPI1, MCP2515_BITMODIFY_INSTR);
-    spi_send(SPI1, reg);
-    spi_send(SPI1, mask);
-    spi_send(SPI1, data);
-    gpio_set(GPIOA, 4);
-}
-
-
 //------------------------------------------------------------------------------
 static uint8_t _mcp2515_read_tec1(void) {
     uint8_t tec = 0;
     tec = _mcp2515_read1(TEC);
-
-    return tec;
-}
-
-static uint8_t _mcp2515_read_tec(void) {
-    uint8_t tec = 0;
-    tec = _mcp2515_read(TEC);
 
     return tec;
 }
@@ -355,56 +234,6 @@ int mcp2515_init1(uint8_t osc, uint8_t br, uint8_t sp) {
 
     /* enter Normal Mode */
     _mcp2515_bit_modify1(CANCTRL0,
-            CANCTRL_REQOP2 | CANCTRL_REQOP1 | CANCTRL_REQOP0, 0x00);
-
-    return 0;
-}
-
-int mcp2515_init(uint8_t osc, uint8_t br, uint8_t sp) {
-    const mcp2515_canconf_t *c;
-    char canset = 0;
-
-    spi_master_init(SPI1, SPI_MODE0, SPI_BR32, SPI_MSB);
-    gpio_set(GPIOA, 4);
-
-    /* enter Configuration Mode */
-    _mcp2515_reset();
-
-    for (c = mcp2515_confs; c->osc; c++) {
-        if (osc == c->osc && br == c->br && sp == c->sp) {
-            _mcp2515_write(CNF1, c->cnf1);
-            _mcp2515_write(CNF2, c->cnf2);
-            _mcp2515_write(CNF3, c->cnf3);
-
-            /* check */
-            if ((_mcp2515_read(CNF1) != c->cnf1) ||
-                    (_mcp2515_read(CNF2) != c->cnf2) ||
-                    (_mcp2515_read(CNF3) != c->cnf3)) {
-                return -1;
-            }
-
-            canset = 1;
-        }
-    }
-
-    if (!canset) {
-        return -1;
-    }
-
-    /* receives any message */
-    _mcp2515_bit_modify(RXB0CTRL, RXB0CTRL_RXM1 | RXB0CTRL_RXM0 |
-            RXB0CTRL_BUKT, 0xFF);
-
-    /* enable external interrupts */
-    //_enable_pb10_int();
-
-    /* enable MCP2515 interrupts */
-    _mcp2515_bit_modify(CANINTE, CANINTE_RX0IE | CANINTE_RX1IE |
-            //CANINTE_ERRIE | CANINTE_MERRE |
-            CANINTE_TX0IE | CANINTE_TX1IE | CANINTE_TX2IE, 0xFF);
-
-    /* enter Normal Mode */
-    _mcp2515_bit_modify(CANCTRL0,
             CANCTRL_REQOP2 | CANCTRL_REQOP1 | CANCTRL_REQOP0, 0x00);
 
     return 0;
@@ -534,63 +363,4 @@ void mcp2515_send1(uint8_t ft, const uint32_t id, const int prio,
     //xTaskResumeAll();
     //taskEXIT_CRITICAL();
     taskENABLE_INTERRUPTS();
-}
-
-void mcp2515_send(uint8_t ft, const uint32_t id, const int prio,
-        struct can_frame *d) {
-    uint8_t txbnsidl;
-    uint8_t txbn = 0;
-    uint8_t read_status;
-    txbconf_t c;
-
-    __disable_irq();
-
-    read_status = _mcp2515_read_status();
-
-    /* try TXB0 */
-    if (!(read_status & MCP2515_READSTATUS_TX0REQ)) {
-        _mcp2515_bit_modify(TXB0CTRL, TXB0CTRL_TXP1 | TXB0CTRL_TXP0, prio);
-        txbn = 0;
-    /* try TXB1 */
-    } else if (!(read_status & MCP2515_READSTATUS_TX1REQ)) {
-        _mcp2515_bit_modify(TXB1CTRL, TXB1CTRL_TXP1 | TXB1CTRL_TXP0, prio);
-        txbn = 1;
-    /* try TXB2 */
-    } else if (!(read_status & MCP2515_READSTATUS_TX2REQ)) {
-        _mcp2515_bit_modify(TXB2CTRL, TXB2CTRL_TXP1 | TXB2CTRL_TXP0, prio);
-        txbn = 2;
-    }
-
-    /* standard frame */
-    if (ft == STDF) {
-        c.txbnsidh = (uint8_t) ((id & TXBnSIDH_STD) >> 3);
-        c.txbnsidl = (uint8_t) ((id & TXBnSIDL_STD) << 5);
-        c.txbneid8 = 0x00;
-        c.txbneid0 = 0x00;
-
-        /* load TXB */
-        _mcp2515_load_tx_buffer(MCP2515_LOADTXB_TXBnSIDH(txbn), &c, d);
-
-        /* request to send TXBn */
-        _mcp2515_rts(MCP2515_RTS_TXBn(txbn));
-    } else if (ft == EXTF) {
-        txbnsidl = (uint8_t) ((id & TXBnSIDL10_EXT) >> 16);
-        txbnsidl = (uint8_t) (txbnsidl | ((id & TXBnSIDL75_EXT) >> 13));
-
-        c.txbnsidh = (uint8_t) ((id & TXBnSIDH_EXT) >> 21);
-        c.txbnsidl = txbnsidl;
-        c.txbneid8 = (uint8_t) ((id & TXBnEID8_EXT) >> 8);
-        c.txbneid0 = (uint8_t) (id & TXBnEID0_EXT);
-
-        /* load TXB */
-        _mcp2515_load_tx_buffer(MCP2515_LOADTXB_TXBnSIDH(txbn), &c, d);
-
-        /* activate extended frame bit */
-        _mcp2515_write(TXBnSIDL(txbn), c.txbnsidl | TXBnSIDL_EXIDE);
-
-        /* request to send TXBn */
-        _mcp2515_rts(MCP2515_RTS_TXBn(txbn));
-    }
-
-    __enable_irq();
 }

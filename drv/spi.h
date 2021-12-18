@@ -27,24 +27,3 @@
 
 void spi_init1();
 void spi_send1(SPI_HandleTypeDef *, uint8_t *, uint8_t *, uint16_t);
-
-#define SPI_MODE0       0x1
-#define SPI_MODE3       0x2
-
-#define SPI_BR2         0x1
-#define SPI_BR4         0x2
-#define SPI_BR8         0x3
-#define SPI_BR16        0x4
-#define SPI_BR32        0x5
-#define SPI_BR64        0x6
-#define SPI_BR128       0x7
-#define SPI_BR256       0x8
-
-#define SPI_MSB         0x1
-#define SPI_LSB         0x2
-
-void spi_master_init(SPI_TypeDef *, uint8_t, uint8_t, uint8_t);
-void spi_set_mode(SPI_TypeDef *, uint8_t);
-void spi_set_clkdiv(SPI_TypeDef *, uint8_t);
-void spi_set_bitorder(SPI_TypeDef *, uint8_t);
-uint8_t spi_send(SPI_TypeDef *, uint8_t);
